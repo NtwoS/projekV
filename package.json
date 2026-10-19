@@ -4,7 +4,35 @@
   "description": "Lightweight photo culling application with gamepad and keyboard support",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder --win",
+    "build:portable": "electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.ntwos.photoselector",
+    "productName": "Photo Selector",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "src/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "installerIcon": "src/icon.ico",
+      "uninstallerIcon": "src/icon.ico",
+      "installerHeaderIcon": "src/icon.ico"
+    }
   },
   "keywords": [
     "photo",
@@ -13,9 +41,10 @@
     "gamepad",
     "electron"
   ],
-  "author": "",
+  "author": "NtwoS",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^33.2.1"
+    "electron": "^33.2.1",
+    "electron-builder": "^26.15.3"
   }
 }
