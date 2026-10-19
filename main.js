@@ -10,6 +10,9 @@ const IMAGE_EXTENSIONS = new Set([
 
 let mainWindow = null;
 
+// Suppress Chromium GPU cache file-lock warnings on Windows
+app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
+
 // Register custom protocol for fast, secure local file loading
 protocol.registerSchemesAsPrivileged([
   {
