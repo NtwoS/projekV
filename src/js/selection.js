@@ -1,35 +1,40 @@
 // Selection manager: Pick, Reject, Maybe, Reset, Undo, and Auto-save
+// Optimized: cached counters, no full-map iteration per action, no dead badge code
 class SelectionManager {
   constructor() {
     this.selections = new Map(); // filename -> status ('pick' | 'reject' | 'maybe')
     this.historyStack = [];      // For Undo operation
 
-    // DOM Elements
-    this.selectionBadge = document.getElementById('selectionBadge');
-    this.badgeIcon = document.getElementById('badgeIcon');
-    this.badgeText = document.getElementById('badgeText');
+    // Cached stat counters — avoid iterating the entire map every press
+    this._pickCount = 0;
+    this._rejectCount = 0;
+    this._maybeCount = 0;
+
+    // DOM Elements (cached once)
     this.viewerArea = document.getElementById('viewerArea');
     this.btnUndo = document.getElementById('btnUndo');
 
-    // Counters
+    // Stat display elements
     this.statCurrentIndex = document.getElementById('statCurrentIndex');
     this.statTotalPhotos = document.getElementById('statTotalPhotos');
     this.statPickCount = document.getElementById('statPickCount');
     this.statMaybeCount = document.getElementById('statMaybeCount');
     this.statRejectCount = document.getElementById('statRejectCount');
     this.statUnmarkedCount = document.getElementById('statUnmarkedCount');
-
-    this.badgeTimeout = null;
   }
 
   loadData(savedData) {
     this.selections.clear();
     this.historyStack = [];
+    this._pickCount = 0;
+    this._rejectCount = 0;
+    this._maybeCount = 0;
 
     if (savedData && Array.isArray(savedData.photos)) {
       for (const item of savedData.photos) {
         if (item.status) {
           this.selections.set(item.filename, item.status);
+          this._incrementCounter(item.status);
         }
       }
     }
@@ -41,6 +46,19 @@ class SelectionManager {
     }
   }
 
+  // Internal counter helpers — O(1) instead of iterating the entire map
+  _incrementCounter(status) {
+    if (status === 'pick') this._pickCount++;
+    else if (status === 'reject') this._rejectCount++;
+    else if (status === 'maybe') this._maybeCount++;
+  }
+
+  _decrementCounter(status) {
+    if (status === 'pick') this._pickCount--;
+    else if (status === 'reject') this._rejectCount--;
+    else if (status === 'maybe') this._maybeCount--;
+  }
+
   getSelection(filename) {
     return this.selections.get(filename) || null;
   }
@@ -50,6 +68,10 @@ class SelectionManager {
     if (!photo) return;
 
     const previousStatus = this.selections.get(photo.filename) || null;
+
+    // Update counters: decrement old, increment new
+    if (previousStatus) this._decrementCounter(previousStatus);
+    if (status) this._incrementCounter(status);
 
     // Set new status or remove if reset (status === null)
     if (status) {
@@ -67,9 +89,7 @@ class SelectionManager {
     });
     this.updateUndoButton();
 
-    // Update filmstrip & viewer borders instantly without popup badge animation
-
-    // Update filmstrip & viewer borders
+    // Update filmstrip & viewer borders instantly
     if (window.filmstripManager) {
       window.filmstripManager.updateItemStatus(photo.filename, status);
     }
@@ -81,7 +101,7 @@ class SelectionManager {
       window.sidebarManager.updateItem(photo, window.photoManager.currentIndex, status);
     }
 
-    // Persist data (debounced)
+    // Persist data (debounced — won't block UI)
     this.persist();
 
     // Auto-advance to next photo immediately (zero input lag)
@@ -98,6 +118,10 @@ class SelectionManager {
 
     const lastAction = this.historyStack.pop();
     this.updateUndoButton();
+
+    // Update counters
+    if (lastAction.newStatus) this._decrementCounter(lastAction.newStatus);
+    if (lastAction.previousStatus) this._incrementCounter(lastAction.previousStatus);
 
     // Restore status
     if (lastAction.previousStatus) {
@@ -127,39 +151,6 @@ class SelectionManager {
     window.app.showToast(`Undo: status ${lastAction.filename} dikembalikan`);
   }
 
-  showSelectionBadge(status) {
-    if (!this.selectionBadge) return;
-
-    if (this.badgeTimeout) {
-      clearTimeout(this.badgeTimeout);
-    }
-
-    // Reset classes
-    this.selectionBadge.className = 'selection-badge';
-
-    const badges = {
-      pick: { icon: '✓', text: 'PICK', class: 'badge-pick' },
-      reject: { icon: '✕', text: 'REJECT', class: 'badge-reject' },
-      maybe: { icon: '?', text: 'MAYBE', class: 'badge-maybe' },
-      null: { icon: '—', text: 'RESET', class: 'badge-reset' }
-    };
-
-    const config = badges[status] || badges['null'];
-    this.badgeIcon.textContent = config.icon;
-    this.badgeText.textContent = config.text;
-    this.selectionBadge.classList.add(config.class);
-
-    // Re-trigger animation cleanly without forcing synchronous layout reflow
-    this.selectionBadge.classList.remove('badge-pop-active');
-    requestAnimationFrame(() => {
-      this.selectionBadge.classList.add('badge-pop-active');
-    });
-
-    this.badgeTimeout = setTimeout(() => {
-      this.selectionBadge.classList.add('hidden');
-    }, 350);
-  }
-
   updateViewerBorder() {
     const photo = window.photoManager.getCurrentPhoto();
     this.viewerArea.classList.remove('status-pick', 'status-reject', 'status-maybe');
@@ -173,16 +164,10 @@ class SelectionManager {
   }
 
   updateStats() {
-    const photos = window.photoManager.photos;
-    const total = photos.length;
-    let pick = 0, reject = 0, maybe = 0;
-
-    for (const [, status] of this.selections.entries()) {
-      if (status === 'pick') pick++;
-      else if (status === 'reject') reject++;
-      else if (status === 'maybe') maybe++;
-    }
-
+    const total = window.photoManager.photos.length;
+    const pick = this._pickCount;
+    const reject = this._rejectCount;
+    const maybe = this._maybeCount;
     const unmarked = Math.max(0, total - (pick + reject + maybe));
 
     this.statCurrentIndex.textContent = total > 0 ? (window.photoManager.currentIndex + 1) : 0;
@@ -209,15 +194,18 @@ class SelectionManager {
     const folderPath = window.photoManager.folderPath;
     if (!folderPath) return;
 
+    // Build only items that have a status — O(selections.size) not O(photos.length)
+    const photosData = [];
+    for (const [filename, status] of this.selections.entries()) {
+      photosData.push({ filename, status });
+    }
+
     const data = {
       version: 1,
       folderPath: folderPath,
       lastIndex: window.photoManager.currentIndex,
       updatedAt: new Date().toISOString(),
-      photos: window.photoManager.photos.map(p => ({
-        filename: p.filename,
-        status: this.getSelection(p.filename)
-      }))
+      photos: photosData
     };
 
     window.storageManager.saveDebounced(folderPath, data);

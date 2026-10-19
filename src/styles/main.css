@@ -389,6 +389,7 @@ body {
   justify-content: center;
   overflow: hidden;
   background-color: #040404;
+  contain: layout style;
 }
 
 .image-stage {
@@ -400,6 +401,7 @@ body {
   position: relative;
   overflow: hidden;
   cursor: grab;
+  contain: layout style paint;
 }
 
 .image-stage:active {
@@ -412,6 +414,8 @@ body {
   object-fit: contain;
   transform-origin: center center;
   pointer-events: none;
+  will-change: transform;
+  contain: paint;
 }
 
 /* Status Indicator on Active Photo Viewer (Instant Crisp Border) */

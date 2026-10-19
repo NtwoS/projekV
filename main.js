@@ -10,6 +10,11 @@ const IMAGE_EXTENSIONS = new Set([
 
 let mainWindow = null;
 
+// GPU acceleration for fast image rendering
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-zero-copy');
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
+
 // Suppress Chromium GPU cache file-lock warnings on Windows
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
 

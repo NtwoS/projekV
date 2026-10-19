@@ -1,10 +1,12 @@
 // Filmstrip component: renders horizontal thumbnails and tracks active photo
+// Optimized: O(1) active tracking, instant scroll, no querySelector scanning
 class FilmstripManager {
   constructor() {
     this.track = document.getElementById('filmstripTrack');
     this.btnScrollLeft = document.getElementById('btnScrollFilmstripLeft');
     this.btnScrollRight = document.getElementById('btnScrollFilmstripRight');
     this.itemsMap = new Map(); // filename -> DOM element
+    this.activeItem = null;    // cached reference — no querySelector needed
 
     this.initEventListeners();
   }
@@ -12,13 +14,15 @@ class FilmstripManager {
   initEventListeners() {
     if (this.btnScrollLeft) {
       this.btnScrollLeft.addEventListener('click', () => {
-        this.track.scrollBy({ left: -320, behavior: 'smooth' });
+        // Instant scroll — no smooth queuing
+        this.track.scrollLeft -= 320;
       });
     }
 
     if (this.btnScrollRight) {
       this.btnScrollRight.addEventListener('click', () => {
-        this.track.scrollBy({ left: 320, behavior: 'smooth' });
+        // Instant scroll — no smooth queuing
+        this.track.scrollLeft += 320;
       });
     }
 
@@ -36,6 +40,7 @@ class FilmstripManager {
   render(photos) {
     this.track.innerHTML = '';
     this.itemsMap.clear();
+    this.activeItem = null;
 
     const fragment = document.createDocumentFragment();
 
@@ -79,9 +84,9 @@ class FilmstripManager {
   }
 
   setActive(index) {
-    const currentActive = this.track.querySelector('.filmstrip-item.active');
-    if (currentActive) {
-      currentActive.classList.remove('active');
+    // O(1) deactivation using cached reference instead of querySelector scan
+    if (this.activeItem) {
+      this.activeItem.classList.remove('active');
     }
 
     const photos = window.photoManager.photos;
@@ -90,6 +95,7 @@ class FilmstripManager {
       const item = this.itemsMap.get(photo.filename);
       if (item) {
         item.classList.add('active');
+        this.activeItem = item; // cache for next deactivation
         this.scrollToItem(item);
       }
     }
@@ -107,7 +113,7 @@ class FilmstripManager {
 
   scrollToItem(item) {
     if (!item || !this.track) return;
-    // Instant arithmetic scroll without triggering synchronous reflow or animation queuing
+    // Instant arithmetic scroll — no animation queuing
     const targetScroll = item.offsetLeft - (this.track.clientWidth / 2) + (item.clientWidth / 2);
     this.track.scrollLeft = targetScroll;
   }

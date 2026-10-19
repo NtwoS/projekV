@@ -1,9 +1,16 @@
 // Photos Manager: scanning, loading, preloading, zooming & panning
+// Optimized for zero-lag high-speed photo culling
 class PhotoManager {
   constructor() {
     this.folderPath = null;
     this.photos = [];
     this.currentIndex = -1;
+
+    // Decoded image cache — keeps fully decoded bitmaps in memory
+    // so switching photos is instant without re-decoding from disk
+    this.imageCache = new Map(); // index -> Image object (decoded)
+    this.CACHE_AHEAD = 3;  // pre-decode 3 photos ahead
+    this.CACHE_BEHIND = 1; // keep 1 photo behind
 
     // Zoom & Pan state
     this.scale = 1.0;
@@ -13,10 +20,8 @@ class PhotoManager {
     this.dragStartX = 0;
     this.dragStartY = 0;
 
-    // DOM Elements
+    // DOM Elements (cached once, never re-queried)
     this.mainImage = document.getElementById('mainImage');
-    this.preloadNext = document.getElementById('preloadNext');
-    this.preloadPrev = document.getElementById('preloadPrev');
     this.photoFilename = document.getElementById('photoFilename');
     this.photoDimensions = document.getElementById('photoDimensions');
     this.photoFileSize = document.getElementById('photoFileSize');
@@ -84,6 +89,8 @@ class PhotoManager {
 
       this.folderPath = folderPath;
       this.photos = photos;
+      // Clear old cache when switching folders
+      this.imageCache.clear();
       return true;
     } catch (err) {
       console.error('Failed to load photos from folder:', err);
@@ -106,22 +113,34 @@ class PhotoManager {
     const photo = this.photos[index];
     const photoUrl = window.electronAPI.toPhotoUrl(photo.fullPath);
 
-    // Reset zoom when switching photos
-    this.resetZoom(false);
+    // Reset zoom when switching photos (skip DOM update if already at 1x)
+    if (this.scale !== 1.0) {
+      this.resetZoom(false);
+    } else {
+      this.panX = 0;
+      this.panY = 0;
+    }
 
-    // Set main image source with async decoding off the layout thread
-    this.mainImage.decoding = 'async';
-    this.mainImage.src = photoUrl;
+    // Check if this photo is already decoded in cache
+    const cached = this.imageCache.get(index);
+    if (cached && cached.complete && cached.src) {
+      // Use cached decoded bitmap — instant display
+      this.mainImage.src = cached.src;
+    } else {
+      // Fallback: load directly with async decode
+      this.mainImage.decoding = 'async';
+      this.mainImage.src = photoUrl;
+    }
 
     // Update metadata info
     this.photoFilename.textContent = photo.filename;
     this.photoFileSize.textContent = this.formatFileSize(photo.size);
     this.photoDimensions.textContent = '';
 
-    // Preload adjacent photos off-thread
+    // Preload adjacent photos into cache
     this.preloadAdjacentPhotos(index);
 
-    // Notify listeners
+    // Notify listeners — only update what's needed
     if (window.filmstripManager) {
       window.filmstripManager.setActive(index);
     }
@@ -137,22 +156,38 @@ class PhotoManager {
   }
 
   preloadAdjacentPhotos(currentIndex) {
-    // Off-thread pre-decode next 2 photos
-    for (let offset = 1; offset <= 2; offset++) {
+    // Pre-decode photos ahead (most likely direction of navigation)
+    for (let offset = 1; offset <= this.CACHE_AHEAD; offset++) {
       const idx = currentIndex + offset;
-      if (idx < this.photos.length) {
-        const nextUrl = window.electronAPI.toPhotoUrl(this.photos[idx].fullPath);
+      if (idx < this.photos.length && !this.imageCache.has(idx)) {
+        const url = window.electronAPI.toPhotoUrl(this.photos[idx].fullPath);
         const img = new Image();
         img.decoding = 'async';
-        img.src = nextUrl;
+        img.src = url;
+        this.imageCache.set(idx, img);
       }
     }
-    // Off-thread pre-decode prev photo
-    if (currentIndex - 1 >= 0) {
-      const prevUrl = window.electronAPI.toPhotoUrl(this.photos[currentIndex - 1].fullPath);
-      const img = new Image();
-      img.decoding = 'async';
-      img.src = prevUrl;
+
+    // Pre-decode photo behind
+    for (let offset = 1; offset <= this.CACHE_BEHIND; offset++) {
+      const idx = currentIndex - offset;
+      if (idx >= 0 && !this.imageCache.has(idx)) {
+        const url = window.electronAPI.toPhotoUrl(this.photos[idx].fullPath);
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = url;
+        this.imageCache.set(idx, img);
+      }
+    }
+
+    // Evict distant photos from cache to prevent memory bloat
+    // Keep only photos within [currentIndex - CACHE_BEHIND - 2, currentIndex + CACHE_AHEAD + 2]
+    const keepMin = currentIndex - this.CACHE_BEHIND - 2;
+    const keepMax = currentIndex + this.CACHE_AHEAD + 2;
+    for (const cachedIdx of this.imageCache.keys()) {
+      if (cachedIdx < keepMin || cachedIdx > keepMax) {
+        this.imageCache.delete(cachedIdx);
+      }
     }
   }
 
