@@ -77,20 +77,17 @@ class SelectionManager {
     this.updateViewerBorder();
     this.updateStats();
 
-    // Update right sidebar
+    // Update right sidebar efficiently without full DOM wipe
     if (window.sidebarManager) {
-      window.sidebarManager.render();
+      window.sidebarManager.updateItem(photo, window.photoManager.currentIndex, status);
     }
 
-    // Persist data
+    // Persist data (debounced)
     this.persist();
 
-    // Auto-advance to next photo
+    // Auto-advance to next photo immediately (zero input lag)
     if (autoAdvance) {
-      // Very slight delay (60ms) gives instant visual confirmation then smooth step
-      setTimeout(() => {
-        window.photoManager.nextPhoto();
-      }, 70);
+      window.photoManager.nextPhoto();
     }
   }
 
@@ -153,14 +150,15 @@ class SelectionManager {
     this.badgeText.textContent = config.text;
     this.selectionBadge.classList.add(config.class);
 
-    // Re-trigger animation
-    this.selectionBadge.style.animation = 'none';
-    this.selectionBadge.offsetHeight; // trigger reflow
-    this.selectionBadge.style.animation = '';
+    // Re-trigger animation cleanly without forcing synchronous layout reflow
+    this.selectionBadge.classList.remove('badge-pop-active');
+    requestAnimationFrame(() => {
+      this.selectionBadge.classList.add('badge-pop-active');
+    });
 
     this.badgeTimeout = setTimeout(() => {
       this.selectionBadge.classList.add('hidden');
-    }, 450);
+    }, 350);
   }
 
   updateViewerBorder() {

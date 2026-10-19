@@ -1,4 +1,4 @@
-// Right Sidebar Manager: Displays list of selected/rejected/maybe photos
+// Right Sidebar Manager: High-performance list of selected/rejected photos
 class SidebarManager {
   constructor() {
     this.sidebar = document.getElementById('sidebarRight');
@@ -15,6 +15,7 @@ class SidebarManager {
 
     this.currentFilter = 'all'; // 'all' | 'pick' | 'reject' | 'maybe'
     this.isOpen = true;
+    this.cardMap = new Map(); // filename -> DOM Card Element (avoids re-creating images!)
 
     this.initEventListeners();
   }
@@ -59,6 +60,7 @@ class SidebarManager {
     if (this.btnToggle) {
       this.btnToggle.classList.add('active');
     }
+    this.render();
   }
 
   close() {
@@ -75,7 +77,6 @@ class SidebarManager {
     if (this.sidebar) {
       this.sidebar.classList.remove('hidden');
       this.open();
-      this.render();
     }
   }
 
@@ -85,124 +86,107 @@ class SidebarManager {
     }
   }
 
-  render() {
-    if (!this.sidebarList || !window.photoManager || !window.selectionManager) return;
+  // Fast in-place item update without destroying other cards/images
+  updateItem(photo, index, status) {
+    this.updateCounts();
 
-    const photos = window.photoManager.photos;
-    const selections = window.selectionManager.selections;
+    if (!this.isOpen || !this.sidebarList) return;
 
-    // Collect all reviewed photos
-    const items = [];
-    let pickCount = 0;
-    let rejectCount = 0;
-    let maybeCount = 0;
+    const existingCard = this.cardMap.get(photo.filename);
 
-    photos.forEach((photo, index) => {
-      const status = selections.get(photo.filename);
-      if (status) {
-        if (status === 'pick') pickCount++;
-        else if (status === 'reject') rejectCount++;
-        else if (status === 'maybe') maybeCount++;
-
-        if (this.currentFilter === 'all' || this.currentFilter === status) {
-          items.push({ photo, index, status });
-        }
+    if (!status) {
+      // Photo unmarked: remove card
+      if (existingCard) {
+        existingCard.remove();
+        this.cardMap.delete(photo.filename);
       }
-    });
-
-    const totalReviewed = pickCount + rejectCount + maybeCount;
-
-    // Update filter counts
-    if (this.filterCountAll) this.filterCountAll.textContent = totalReviewed;
-    if (this.filterCountPick) this.filterCountPick.textContent = pickCount;
-    if (this.filterCountReject) this.filterCountReject.textContent = rejectCount;
-    if (this.filterCountMaybe) this.filterCountMaybe.textContent = maybeCount;
-
-    // Empty state
-    if (items.length === 0) {
-      const emptyMessages = {
-        all: 'Belum ada foto yang ditandai.<br><small>Gunakan tombol Pick (A/1), Reject (B/2), atau Maybe (Y/3).</small>',
-        pick: 'Belum ada foto yang di-Pick (Pilih).',
-        reject: 'Belum ada foto yang di-Reject (Tolak).',
-        maybe: 'Belum ada foto yang di-tanda Ragu-ragu.'
-      };
-
-      this.sidebarList.innerHTML = `
-        <div class="sidebar-empty">
-          <span class="sidebar-empty-icon">📁</span>
-          <p>${emptyMessages[this.currentFilter] || emptyMessages.all}</p>
-        </div>
-      `;
+      this.checkEmptyState();
       return;
     }
 
-    this.sidebarList.innerHTML = '';
-    const fragment = document.createDocumentFragment();
-    const currentIndex = window.photoManager.currentIndex;
+    // Check filter match
+    const matchesFilter = this.currentFilter === 'all' || this.currentFilter === status;
 
-    items.forEach(({ photo, index, status }) => {
-      const card = document.createElement('div');
-      card.className = `sidebar-item status-${status}`;
-      if (index === currentIndex) {
-        card.classList.add('current');
+    if (existingCard) {
+      if (!matchesFilter) {
+        existingCard.style.display = 'none';
+      } else {
+        existingCard.style.display = 'flex';
+        existingCard.className = `sidebar-item status-${status}`;
+        const chip = existingCard.querySelector('.status-chip');
+        if (chip) {
+          const st = this.getStatusConfig(status);
+          chip.className = `status-chip ${st.class}`;
+          chip.textContent = `${st.icon} ${st.label}`;
+        }
       }
+    } else if (matchesFilter) {
+      const card = this.createCardElement(photo, index, status);
+      this.sidebarList.appendChild(card);
+      this.cardMap.set(photo.filename, card);
+    }
 
-      const statusLabels = {
-        pick: { label: 'PICK', icon: '✓', class: 'badge-pick' },
-        reject: { label: 'REJECT', icon: '✕', class: 'badge-reject' },
-        maybe: { label: 'MAYBE', icon: '?', class: 'badge-maybe' }
-      };
-      const st = statusLabels[status] || { label: status, icon: '', class: '' };
+    this.checkEmptyState();
+  }
 
-      const thumbUrl = window.electronAPI.toPhotoUrl(photo.fullPath);
+  getStatusConfig(status) {
+    const statusLabels = {
+      pick: { label: 'PICK', icon: '✓', class: 'badge-pick' },
+      reject: { label: 'REJECT', icon: '✕', class: 'badge-reject' },
+      maybe: { label: 'MAYBE', icon: '?', class: 'badge-maybe' }
+    };
+    return statusLabels[status] || { label: status, icon: '', class: '' };
+  }
 
-      card.innerHTML = `
-        <img class="sidebar-thumb" src="${thumbUrl}" alt="${photo.filename}" loading="lazy" />
-        <div class="sidebar-info">
-          <div class="sidebar-item-header">
-            <span class="sidebar-item-index">${index + 1}</span>
-            <span class="sidebar-item-name" title="${photo.filename}">${photo.filename}</span>
-          </div>
-          <div class="sidebar-item-meta">
-            <span class="status-chip ${st.class}">${st.icon} ${st.label}</span>
-          </div>
+  createCardElement(photo, index, status) {
+    const card = document.createElement('div');
+    card.className = `sidebar-item status-${status}`;
+    card.dataset.filename = photo.filename;
+
+    const st = this.getStatusConfig(status);
+    const thumbUrl = window.electronAPI.toPhotoUrl(photo.fullPath);
+
+    card.innerHTML = `
+      <img class="sidebar-thumb" src="${thumbUrl}" alt="${photo.filename}" loading="lazy" decoding="async" />
+      <div class="sidebar-info">
+        <div class="sidebar-item-header">
+          <span class="sidebar-item-index">${index + 1}</span>
+          <span class="sidebar-item-name" title="${photo.filename}">${photo.filename}</span>
         </div>
-        <div class="sidebar-item-actions">
-          <button class="btn-item-action btn-change-pick" title="Ubah jadi Pick">✓</button>
-          <button class="btn-item-action btn-change-reject" title="Ubah jadi Reject">✕</button>
-          <button class="btn-item-action btn-change-clear" title="Hapus Status">—</button>
+        <div class="sidebar-item-meta">
+          <span class="status-chip ${st.class}">${st.icon} ${st.label}</span>
         </div>
-      `;
+      </div>
+      <div class="sidebar-item-actions">
+        <button class="btn-item-action btn-change-pick" title="Ubah jadi Pick">✓</button>
+        <button class="btn-item-action btn-change-reject" title="Ubah jadi Reject">✕</button>
+        <button class="btn-item-action btn-change-clear" title="Hapus Status">—</button>
+      </div>
+    `;
 
-      // Click card to jump to photo
-      card.addEventListener('click', (e) => {
-        if (e.target.closest('.btn-item-action')) return;
-        window.photoManager.showPhoto(index);
-      });
-
-      // Quick action buttons
-      const btnPick = card.querySelector('.btn-change-pick');
-      btnPick.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.changePhotoStatus(photo, index, 'pick');
-      });
-
-      const btnReject = card.querySelector('.btn-change-reject');
-      btnReject.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.changePhotoStatus(photo, index, 'reject');
-      });
-
-      const btnClear = card.querySelector('.btn-change-clear');
-      btnClear.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.changePhotoStatus(photo, index, null);
-      });
-
-      fragment.appendChild(card);
+    // Click card to jump to photo
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.btn-item-action')) return;
+      window.photoManager.showPhoto(index);
     });
 
-    this.sidebarList.appendChild(fragment);
+    // Quick action buttons
+    card.querySelector('.btn-change-pick').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.changePhotoStatus(photo, index, 'pick');
+    });
+
+    card.querySelector('.btn-change-reject').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.changePhotoStatus(photo, index, 'reject');
+    });
+
+    card.querySelector('.btn-change-clear').addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.changePhotoStatus(photo, index, null);
+    });
+
+    return card;
   }
 
   changePhotoStatus(photo, index, newStatus) {
@@ -218,25 +202,85 @@ class SidebarManager {
     window.selectionManager.updateViewerBorder();
     window.selectionManager.updateStats();
     window.selectionManager.persist();
-    this.render();
+    this.updateItem(photo, index, newStatus);
+  }
+
+  updateCounts() {
+    if (!window.photoManager || !window.selectionManager) return;
+    let pickCount = 0, rejectCount = 0, maybeCount = 0;
+
+    for (const [, status] of window.selectionManager.selections.entries()) {
+      if (status === 'pick') pickCount++;
+      else if (status === 'reject') rejectCount++;
+      else if (status === 'maybe') maybeCount++;
+    }
+
+    const total = pickCount + rejectCount + maybeCount;
+    if (this.filterCountAll) this.filterCountAll.textContent = total;
+    if (this.filterCountPick) this.filterCountPick.textContent = pickCount;
+    if (this.filterCountReject) this.filterCountReject.textContent = rejectCount;
+    if (this.filterCountMaybe) this.filterCountMaybe.textContent = maybeCount;
+  }
+
+  render() {
+    if (!this.sidebarList || !window.photoManager || !window.selectionManager) return;
+    if (!this.isOpen) return;
+
+    this.updateCounts();
+    this.sidebarList.innerHTML = '';
+    this.cardMap.clear();
+
+    const photos = window.photoManager.photos;
+    const selections = window.selectionManager.selections;
+    const fragment = document.createDocumentFragment();
+
+    photos.forEach((photo, index) => {
+      const status = selections.get(photo.filename);
+      if (status) {
+        if (this.currentFilter === 'all' || this.currentFilter === status) {
+          const card = this.createCardElement(photo, index, status);
+          this.cardMap.set(photo.filename, card);
+          fragment.appendChild(card);
+        }
+      }
+    });
+
+    this.sidebarList.appendChild(fragment);
+    this.checkEmptyState();
+    this.highlightCurrent(window.photoManager.currentIndex);
+  }
+
+  checkEmptyState() {
+    const visibleCards = Array.from(this.sidebarList.children).filter(el => !el.classList.contains('sidebar-empty') && el.style.display !== 'none');
+    let emptyEl = this.sidebarList.querySelector('.sidebar-empty');
+
+    if (visibleCards.length === 0) {
+      if (!emptyEl) {
+        emptyEl = document.createElement('div');
+        emptyEl.className = 'sidebar-empty';
+        emptyEl.innerHTML = '<p>Belum ada foto yang ditandai.</p>';
+        this.sidebarList.appendChild(emptyEl);
+      }
+      emptyEl.style.display = 'flex';
+    } else if (emptyEl) {
+      emptyEl.style.display = 'none';
+    }
   }
 
   highlightCurrent(index) {
-    if (!this.sidebarList) return;
-    const items = this.sidebarList.querySelectorAll('.sidebar-item');
-    items.forEach(item => item.classList.remove('current'));
-
+    if (!this.isOpen || !this.sidebarList) return;
     const photos = window.photoManager.photos;
-    if (index >= 0 && index < photos.length) {
-      const filename = photos[index].filename;
-      const target = Array.from(items).find(el => {
-        const nameEl = el.querySelector('.sidebar-item-name');
-        return nameEl && nameEl.textContent === filename;
-      });
-      if (target) {
-        target.classList.add('current');
-        target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-      }
+    if (index < 0 || index >= photos.length) return;
+
+    const currentCard = this.sidebarList.querySelector('.sidebar-item.current');
+    if (currentCard) currentCard.classList.remove('current');
+
+    const filename = photos[index].filename;
+    const target = this.cardMap.get(filename);
+    if (target && target.style.display !== 'none') {
+      target.classList.add('current');
+      // Instant scroll without animating behavior: 'smooth' which causes queuing lag
+      target.scrollIntoView({ block: 'nearest', behavior: 'auto' });
     }
   }
 }

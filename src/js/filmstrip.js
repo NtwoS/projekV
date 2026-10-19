@@ -47,6 +47,7 @@ class FilmstripManager {
 
       const img = document.createElement('img');
       img.loading = 'lazy';
+      img.decoding = 'async';
       img.src = window.electronAPI.toPhotoUrl(photo.fullPath);
       img.alt = photo.filename;
 
@@ -106,11 +107,9 @@ class FilmstripManager {
 
   scrollToItem(item) {
     if (!item || !this.track) return;
-    const trackRect = this.track.getBoundingClientRect();
-    const itemRect = item.getBoundingClientRect();
-
-    const scrollLeft = this.track.scrollLeft + (itemRect.left - trackRect.left) - (trackRect.width / 2) + (itemRect.width / 2);
-    this.track.scrollTo({ left: scrollLeft, behavior: 'smooth' });
+    // Instant arithmetic scroll without triggering synchronous reflow or animation queuing
+    const targetScroll = item.offsetLeft - (this.track.clientWidth / 2) + (item.clientWidth / 2);
+    this.track.scrollLeft = targetScroll;
   }
 
   scrollBy(amount) {

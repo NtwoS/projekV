@@ -109,7 +109,8 @@ class PhotoManager {
     // Reset zoom when switching photos
     this.resetZoom(false);
 
-    // Set main image source
+    // Set main image source with async decoding off the layout thread
+    this.mainImage.decoding = 'async';
     this.mainImage.src = photoUrl;
 
     // Update metadata info
@@ -117,7 +118,7 @@ class PhotoManager {
     this.photoFileSize.textContent = this.formatFileSize(photo.size);
     this.photoDimensions.textContent = '';
 
-    // Preload next 2 photos and previous 1 photo
+    // Preload adjacent photos off-thread
     this.preloadAdjacentPhotos(index);
 
     // Notify listeners
@@ -136,15 +137,22 @@ class PhotoManager {
   }
 
   preloadAdjacentPhotos(currentIndex) {
-    // Preload next photo
-    if (currentIndex + 1 < this.photos.length) {
-      const nextUrl = window.electronAPI.toPhotoUrl(this.photos[currentIndex + 1].fullPath);
-      this.preloadNext.src = nextUrl;
+    // Off-thread pre-decode next 2 photos
+    for (let offset = 1; offset <= 2; offset++) {
+      const idx = currentIndex + offset;
+      if (idx < this.photos.length) {
+        const nextUrl = window.electronAPI.toPhotoUrl(this.photos[idx].fullPath);
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = nextUrl;
+      }
     }
-    // Preload prev photo
+    // Off-thread pre-decode prev photo
     if (currentIndex - 1 >= 0) {
       const prevUrl = window.electronAPI.toPhotoUrl(this.photos[currentIndex - 1].fullPath);
-      this.preloadPrev.src = prevUrl;
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = prevUrl;
     }
   }
 
