@@ -67,8 +67,7 @@ class SelectionManager {
     });
     this.updateUndoButton();
 
-    // Trigger visual pop animation badge
-    this.showSelectionBadge(status);
+    // Update filmstrip & viewer borders instantly without popup badge animation
 
     // Update filmstrip & viewer borders
     if (window.filmstripManager) {
