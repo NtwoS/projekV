@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveSelection: (folderPath, data) => ipcRenderer.invoke('storage:save', folderPath, data),
   exportPhotos: (params) => ipcRenderer.invoke('photos:export', params),
   showInFolder: (filePath) => ipcRenderer.invoke('photos:showInFolder', filePath),
+  openFolderInExplorer: (folderPath) => ipcRenderer.invoke('photos:openFolderInExplorer', folderPath),
   loadKeybindings: () => ipcRenderer.invoke('keybindings:load'),
   saveKeybindings: (data) => ipcRenderer.invoke('keybindings:save', data),
   

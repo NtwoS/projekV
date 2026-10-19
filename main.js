@@ -48,10 +48,25 @@ function buildAppMenu(windowInstance) {
           }
         },
         {
-          label: '&Export Foto...',
+          label: 'Buka Ulang Folder Ini (Refresh)',
+          accelerator: 'F5',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'refresh-folder');
+          }
+        },
+        { type: 'separator' },
+        {
+          label: '&Export Foto Terseleksi...',
           accelerator: 'CmdOrCtrl+E',
           click: () => {
             windowInstance.webContents.send('menu:action', 'open-export');
+          }
+        },
+        {
+          label: 'Buka Folder di File &Explorer',
+          accelerator: 'CmdOrCtrl+Shift+E',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'open-in-explorer');
           }
         },
         { type: 'separator' },
@@ -100,7 +115,15 @@ function buildAppMenu(windowInstance) {
         },
         { type: 'separator' },
         {
-          label: '&Pengaturan Tombol...',
+          label: '⏭ Toggle &Auto-Advance',
+          accelerator: 'Shift+A',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'toggle-autoadvance');
+          }
+        },
+        { type: 'separator' },
+        {
+          label: '&Pengaturan Tombol & Controller...',
           accelerator: 'CmdOrCtrl+,',
           click: () => {
             windowInstance.webContents.send('menu:action', 'open-settings');
@@ -128,6 +151,83 @@ function buildAppMenu(windowInstance) {
         },
         { type: 'separator' },
         {
+          label: '🔍 Toggle Toolbar &Filter & Sort',
+          accelerator: 'Shift+F',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'toggle-viewer-filter');
+          }
+        },
+        {
+          label: 'Filter Cepat',
+          submenu: [
+            {
+              label: 'Semua Foto (All)',
+              click: () => windowInstance.webContents.send('menu:action', 'filter-all')
+            },
+            {
+              label: 'Belum Ditinjau (Unmarked)',
+              click: () => windowInstance.webContents.send('menu:action', 'filter-unmarked')
+            },
+            {
+              label: 'Pick (Pilihan)',
+              click: () => windowInstance.webContents.send('menu:action', 'filter-pick')
+            },
+            {
+              label: 'Reject (Ditolak)',
+              click: () => windowInstance.webContents.send('menu:action', 'filter-reject')
+            },
+            {
+              label: 'Maybe (Ragu-ragu)',
+              click: () => windowInstance.webContents.send('menu:action', 'filter-maybe')
+            }
+          ]
+        },
+        {
+          label: 'Urutan Foto (Sort)',
+          submenu: [
+            {
+              label: 'Nama File (A → Z)',
+              click: () => windowInstance.webContents.send('menu:action', 'sort-name-asc')
+            },
+            {
+              label: 'Nama File (Z → A)',
+              click: () => windowInstance.webContents.send('menu:action', 'sort-name-desc')
+            },
+            {
+              label: 'Waktu / Tanggal (Terbaru)',
+              click: () => windowInstance.webContents.send('menu:action', 'sort-date-desc')
+            },
+            {
+              label: 'Waktu / Tanggal (Terlama)',
+              click: () => windowInstance.webContents.send('menu:action', 'sort-date-asc')
+            },
+            {
+              label: 'Ukuran File (Terbesar)',
+              click: () => windowInstance.webContents.send('menu:action', 'sort-size-desc')
+            },
+            {
+              label: 'Status Seleksi',
+              click: () => windowInstance.webContents.send('menu:action', 'sort-status')
+            }
+          ]
+        },
+        { type: 'separator' },
+        {
+          label: '&Toggle Panel Daftar Seleksi',
+          accelerator: 'Tab',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'toggle-sidebar');
+          }
+        },
+        {
+          label: 'Toggle &Filmstrip Bawah',
+          accelerator: 'Shift+B',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'toggle-filmstrip');
+          }
+        },
+        { type: 'separator' },
+        {
           label: 'Zoom &In',
           accelerator: 'CmdOrCtrl+=',
           click: () => {
@@ -142,20 +242,13 @@ function buildAppMenu(windowInstance) {
           }
         },
         {
-          label: '&Reset Zoom',
+          label: '&Reset Zoom (100%)',
           accelerator: 'R',
           click: () => {
             windowInstance.webContents.send('menu:action', 'reset-zoom');
           }
         },
         { type: 'separator' },
-        {
-          label: '&Toggle Panel Seleksi',
-          accelerator: 'Tab',
-          click: () => {
-            windowInstance.webContents.send('menu:action', 'toggle-sidebar');
-          }
-        },
         { label: '&Layar Penuh (Toggle Full Screen)', role: 'togglefullscreen' },
         { label: 'Toggle Developer &Tools', role: 'toggleDevTools' },
         { label: '&Reload Halaman', role: 'reload' }
@@ -170,6 +263,12 @@ function buildAppMenu(windowInstance) {
           accelerator: 'F1',
           click: () => {
             windowInstance.webContents.send('menu:action', 'show-help');
+          }
+        },
+        {
+          label: 'Pengaturan &Controller / Joystick...',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'open-settings');
           }
         },
         { type: 'separator' },
@@ -199,7 +298,7 @@ function createWindow() {
     height: 860,
     minWidth: 900,
     minHeight: 600,
-    backgroundColor: '#0c0e14',
+    backgroundColor: '#080808',
     title: 'Photo Selector',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -441,6 +540,15 @@ ipcMain.handle('photos:export', async (event, { folderPath, mode, targets }) => 
 ipcMain.handle('photos:showInFolder', async (event, filePath) => {
   if (filePath && fs.existsSync(filePath)) {
     shell.showItemInFolder(filePath);
+    return true;
+  }
+  return false;
+});
+
+// IPC: Open folder directly in OS File Explorer
+ipcMain.handle('photos:openFolderInExplorer', async (event, folderPath) => {
+  if (folderPath && fs.existsSync(folderPath)) {
+    shell.openPath(folderPath);
     return true;
   }
   return false;

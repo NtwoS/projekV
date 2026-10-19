@@ -3,8 +3,14 @@
 class PhotoManager {
   constructor() {
     this.folderPath = null;
-    this.photos = [];
+    this.allPhotos = []; // Master list of all photos in original folder order
+    this.photos = [];    // Active list of photos currently displayed (filtered/sorted)
     this.currentIndex = -1;
+
+    // Filter & Sort state
+    this.isFilterActive = false;
+    this.currentFilter = 'all'; // 'all' | 'unmarked' | 'pick' | 'reject' | 'maybe'
+    this.currentSort = 'name-asc';
 
     // Decoded image cache — keeps fully decoded bitmaps in memory
     // so switching photos is instant without re-decoding from disk
@@ -29,6 +35,23 @@ class PhotoManager {
     this.zoomPercent = document.getElementById('zoomPercent');
     this.imageStage = document.getElementById('imageStage');
     this.viewerArea = document.getElementById('viewerArea');
+
+    // Filter & Sort Toolbar DOM elements
+    this.viewerFilterToolbar = document.getElementById('viewerFilterToolbar');
+    this.btnToggleViewerFilter = document.getElementById('btnToggleViewerFilter');
+    this.btnCloseViewerFilter = document.getElementById('btnCloseViewerFilter');
+    this.viewerFilterPills = document.querySelectorAll('#viewerFilterPills .filter-pill');
+    this.viewerSortSelect = document.getElementById('viewerSortSelect');
+    this.viewerFilterInfoText = document.getElementById('viewerFilterInfoText');
+    this.viewerFilterEmptyState = document.getElementById('viewerFilterEmptyState');
+    this.btnResetViewerFilter = document.getElementById('btnResetViewerFilter');
+
+    // Filter count elements
+    this.vfCountAll = document.getElementById('vfCountAll');
+    this.vfCountUnmarked = document.getElementById('vfCountUnmarked');
+    this.vfCountPick = document.getElementById('vfCountPick');
+    this.vfCountReject = document.getElementById('vfCountReject');
+    this.vfCountMaybe = document.getElementById('vfCountMaybe');
 
     this.initEventListeners();
   }
@@ -76,6 +99,34 @@ class PhotoManager {
         this.setZoom(2.2, e.clientX, e.clientY);
       }
     });
+
+    // Filter & Sort Toolbar listeners
+    if (this.btnToggleViewerFilter) {
+      this.btnToggleViewerFilter.addEventListener('click', () => this.toggleFilterToolbar());
+    }
+
+    if (this.btnCloseViewerFilter) {
+      this.btnCloseViewerFilter.addEventListener('click', () => this.toggleFilterToolbar(false));
+    }
+
+    if (this.btnResetViewerFilter) {
+      this.btnResetViewerFilter.addEventListener('click', () => this.resetFilter());
+    }
+
+    if (this.viewerFilterPills) {
+      this.viewerFilterPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+          const filter = pill.dataset.filter || 'all';
+          this.setFilter(filter);
+        });
+      });
+    }
+
+    if (this.viewerSortSelect) {
+      this.viewerSortSelect.addEventListener('change', (e) => {
+        this.setSort(e.target.value);
+      });
+    }
   }
 
   async loadFolder(folderPath) {
@@ -88,7 +139,26 @@ class PhotoManager {
       }
 
       this.folderPath = folderPath;
-      this.photos = photos;
+      this.allPhotos = photos.slice();
+      this.photos = photos.slice();
+      this.isFilterActive = false;
+      this.currentFilter = 'all';
+      this.currentSort = 'name-asc';
+
+      if (this.viewerSortSelect) this.viewerSortSelect.value = 'name-asc';
+      if (this.viewerFilterPills) {
+        this.viewerFilterPills.forEach(p => p.classList.toggle('active', p.dataset.filter === 'all'));
+      }
+      if (this.viewerFilterToolbar) {
+        this.viewerFilterToolbar.classList.add('hidden');
+      }
+      if (this.btnToggleViewerFilter) {
+        this.btnToggleViewerFilter.classList.remove('active');
+      }
+      if (this.viewerFilterEmptyState) {
+        this.viewerFilterEmptyState.classList.add('hidden');
+      }
+
       // Clear old cache when switching folders
       this.imageCache.clear();
       return true;
@@ -104,6 +174,23 @@ class PhotoManager {
       return this.photos[this.currentIndex];
     }
     return null;
+  }
+
+  showPhotoByFilename(filename) {
+    if (!filename) return false;
+    const idx = this.photos.findIndex(p => p.filename === filename);
+    if (idx !== -1) {
+      return this.showPhoto(idx);
+    }
+    // If not found in current active view (filtered out), reset filter and jump to it
+    if (this.isFilterActive) {
+      this.resetFilterAndSort();
+      const newIdx = this.photos.findIndex(p => p.filename === filename);
+      if (newIdx !== -1) {
+        return this.showPhoto(newIdx);
+      }
+    }
+    return false;
   }
 
   showPhoto(index) {
@@ -250,6 +337,183 @@ class PhotoManager {
 
   applyTransform() {
     this.mainImage.style.transform = `translate(${this.panX}px, ${this.panY}px) scale(${this.scale})`;
+  }
+
+  // Filter & Sort Controls
+  toggleFilterToolbar(forceState) {
+    this.isFilterActive = (forceState !== undefined) ? forceState : !this.isFilterActive;
+    if (this.viewerFilterToolbar) {
+      this.viewerFilterToolbar.classList.toggle('hidden', !this.isFilterActive);
+    }
+    if (this.btnToggleViewerFilter) {
+      this.btnToggleViewerFilter.classList.toggle('active', this.isFilterActive);
+    }
+
+    if (!this.isFilterActive) {
+      this.resetFilterAndSort();
+      if (window.app) window.app.showToast('Filter & Sort dinonaktifkan');
+    } else {
+      this.applyFilterAndSort();
+      if (window.app) window.app.showToast('Filter & Sort diaktifkan');
+    }
+  }
+
+  setFilter(filterType) {
+    this.currentFilter = filterType;
+    if (this.viewerFilterPills) {
+      this.viewerFilterPills.forEach(p => p.classList.toggle('active', p.dataset.filter === filterType));
+    }
+    this.applyFilterAndSort();
+  }
+
+  setSort(sortType) {
+    this.currentSort = sortType;
+    if (this.viewerSortSelect) {
+      this.viewerSortSelect.value = sortType;
+    }
+    this.applyFilterAndSort();
+  }
+
+  resetFilter() {
+    this.setFilter('all');
+  }
+
+  resetFilterAndSort() {
+    const currentPhoto = this.getCurrentPhoto();
+    this.photos = this.allPhotos.slice();
+    this.currentFilter = 'all';
+    this.currentSort = 'name-asc';
+    if (this.viewerSortSelect) this.viewerSortSelect.value = 'name-asc';
+    if (this.viewerFilterPills) {
+      this.viewerFilterPills.forEach(p => p.classList.toggle('active', p.dataset.filter === 'all'));
+    }
+    if (this.viewerFilterEmptyState) {
+      this.viewerFilterEmptyState.classList.add('hidden');
+    }
+
+    if (window.filmstripManager) {
+      window.filmstripManager.render(this.photos);
+    }
+
+    let targetIdx = 0;
+    if (currentPhoto) {
+      const found = this.photos.findIndex(p => p.filename === currentPhoto.filename);
+      if (found !== -1) targetIdx = found;
+    }
+    this.showPhoto(targetIdx);
+    this.updateFilterCounts();
+  }
+
+  applyFilterAndSort() {
+    if (!this.allPhotos || this.allPhotos.length === 0) return;
+    const currentPhoto = this.getCurrentPhoto();
+
+    let list = this.allPhotos.slice();
+
+    // 1. Filter
+    if (this.currentFilter !== 'all' && window.selectionManager) {
+      list = list.filter(p => {
+        const status = window.selectionManager.getSelection(p.filename);
+        if (this.currentFilter === 'unmarked') return !status;
+        return status === this.currentFilter;
+      });
+    }
+
+    // 2. Sort
+    list.sort((a, b) => {
+      switch (this.currentSort) {
+        case 'name-desc':
+          return b.filename.localeCompare(a.filename, undefined, { numeric: true, sensitivity: 'base' });
+        case 'name-asc':
+          return a.filename.localeCompare(b.filename, undefined, { numeric: true, sensitivity: 'base' });
+        case 'date-desc':
+          return (b.mtime || 0) - (a.mtime || 0);
+        case 'date-asc':
+          return (a.mtime || 0) - (b.mtime || 0);
+        case 'size-desc':
+          return (b.size || 0) - (a.size || 0);
+        case 'size-asc':
+          return (a.size || 0) - (b.size || 0);
+        case 'status': {
+          const priority = { pick: 1, maybe: 2, reject: 3, null: 4 };
+          const stA = window.selectionManager ? (window.selectionManager.getSelection(a.filename) || 'null') : 'null';
+          const stB = window.selectionManager ? (window.selectionManager.getSelection(b.filename) || 'null') : 'null';
+          const diff = (priority[stA] || 4) - (priority[stB] || 4);
+          return diff !== 0 ? diff : a.filename.localeCompare(b.filename, undefined, { numeric: true, sensitivity: 'base' });
+        }
+        default:
+          return 0;
+      }
+    });
+
+    this.photos = list;
+    this.imageCache.clear();
+
+    if (window.filmstripManager) {
+      window.filmstripManager.render(this.photos);
+    }
+
+    if (this.photos.length === 0) {
+      this.currentIndex = -1;
+      if (this.viewerFilterEmptyState) {
+        this.viewerFilterEmptyState.classList.remove('hidden');
+      }
+      this.mainImage.src = '';
+      this.photoFilename.textContent = '-';
+      this.photoDimensions.textContent = '';
+      this.photoFileSize.textContent = '';
+      if (window.selectionManager) {
+        window.selectionManager.updateViewerBorder();
+        window.selectionManager.updateStats();
+      }
+    } else {
+      if (this.viewerFilterEmptyState) {
+        this.viewerFilterEmptyState.classList.add('hidden');
+      }
+      let targetIdx = 0;
+      if (currentPhoto) {
+        const found = this.photos.findIndex(p => p.filename === currentPhoto.filename);
+        if (found !== -1) {
+          targetIdx = found;
+        } else {
+          targetIdx = Math.min(Math.max(0, this.currentIndex), this.photos.length - 1);
+        }
+      }
+      this.showPhoto(targetIdx);
+    }
+
+    this.updateFilterCounts();
+  }
+
+  onPhotoMarked(photo, status) {
+    if (this.isFilterActive && this.currentFilter !== 'all') {
+      const stillMatches = (this.currentFilter === 'unmarked' && !status) || (status === this.currentFilter);
+      if (!stillMatches) {
+        this.applyFilterAndSort();
+        return;
+      }
+    }
+    this.nextPhoto();
+  }
+
+  updateFilterCounts() {
+    if (!this.allPhotos || !window.selectionManager) return;
+    const sm = window.selectionManager;
+    const totalAll = this.allPhotos.length;
+    const pick = sm._pickCount;
+    const reject = sm._rejectCount;
+    const maybe = sm._maybeCount;
+    const unmarked = Math.max(0, totalAll - (pick + reject + maybe));
+
+    if (this.vfCountAll) this.vfCountAll.textContent = totalAll;
+    if (this.vfCountUnmarked) this.vfCountUnmarked.textContent = unmarked;
+    if (this.vfCountPick) this.vfCountPick.textContent = pick;
+    if (this.vfCountReject) this.vfCountReject.textContent = reject;
+    if (this.vfCountMaybe) this.vfCountMaybe.textContent = maybe;
+
+    if (this.viewerFilterInfoText) {
+      this.viewerFilterInfoText.textContent = `Menampilkan ${this.photos.length} dari ${totalAll} foto`;
+    }
   }
 
   formatFileSize(bytes) {

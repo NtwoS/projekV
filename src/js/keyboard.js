@@ -51,6 +51,20 @@ class KeyboardHandler {
 
     if (isModalOpen) return;
 
+    // Toggle Auto-Advance shortcut (Shift + A)
+    if (e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+      e.preventDefault();
+      if (window.selectionManager) window.selectionManager.toggleAutoAdvance();
+      return;
+    }
+
+    // Toggle Viewer Filter & Sort toolbar shortcut (Shift + F)
+    if (e.shiftKey && (e.key === 'F' || e.key === 'f')) {
+      e.preventDefault();
+      if (window.photoManager) window.photoManager.toggleFilterToolbar();
+      return;
+    }
+
     // Lookup action from keybindingsManager
     const action = window.keybindingsManager
       ? window.keybindingsManager.getActionForKeyboard(e)

@@ -6,24 +6,18 @@
   <title>Photo Selector — Culling Foto Cepat</title>
   <link rel="stylesheet" href="styles/main.css">
 </head>
-<body class="dark-theme">
+<body class="dark-theme" style="background-color:#080808;color:#fcfcfc;">
   <div id="appContainer" class="app-container">
-    <!-- Top Bar -->
+    <!-- Ultra-Slim Culling Top Bar -->
     <header class="top-bar">
       <div class="top-bar-left">
-        <div class="logo">
-          <span class="logo-icon">📸</span>
-          <span class="logo-title">Photo<strong>Selector</strong></span>
-        </div>
-        <button id="btnOpenFolder" class="btn btn-primary" title="Buka Folder Foto (Ctrl+O / Tombol O)">
-          <span class="icon">📁</span> Buka Folder
-        </button>
-        <div id="folderInfo" class="folder-info" title="Folder saat ini">
+        <div id="folderInfo" class="folder-info clickable" title="Klik untuk membuka folder foto (Ctrl+O)">
+          <span class="folder-icon">📁</span>
           <span id="folderPathText" class="folder-path-text">Belum ada folder dibuka</span>
         </div>
       </div>
 
-      <!-- Stats Counters -->
+      <!-- Stats Counters & Culling Progress -->
       <div id="statsBar" class="stats-bar hidden">
         <div class="stat-badge stat-index" title="Posisi foto saat ini">
           <span id="statCurrentIndex">0</span>/<span id="statTotalPhotos">0</span>
@@ -45,32 +39,88 @@
           <span class="label">REMAIN</span>
           <strong id="statUnmarkedCount">0</strong>
         </div>
+        <div class="stat-divider"></div>
+        <!-- Culling Progress Bar Indicator -->
+        <div class="culling-progress-wrap" title="Progres Culling (Total Ditinjau / Total Foto)">
+          <div class="culling-progress-track">
+            <div id="cullingProgressBarPick" class="culling-bar-segment segment-pick" style="width: 0%"></div>
+            <div id="cullingProgressBarMaybe" class="culling-bar-segment segment-maybe" style="width: 0%"></div>
+            <div id="cullingProgressBarReject" class="culling-bar-segment segment-reject" style="width: 0%"></div>
+          </div>
+          <span id="cullingProgressPercent" class="culling-progress-text">0%</span>
+        </div>
       </div>
 
       <div class="top-bar-right">
-        <!-- Gamepad Indicator -->
+        <!-- Gamepad Indicator (Compact) -->
         <div id="gamepadBadge" class="gamepad-badge disconnected" title="Status Controller Gamepad">
           <span class="gp-icon">🎮</span>
           <span id="gamepadNameText" class="gp-text">OFFLINE</span>
         </div>
 
-        <button id="btnToggleSidebar" class="btn btn-secondary active" title="Buka/Tutup Daftar Seleksi (Tab / L)">
+        <!-- Auto-Advance Compact Pill -->
+        <button id="btnToggleAutoAdvance" class="btn-hud btn-hud-autoadvance active" title="Toggle Auto-Advance setelah menandai (Shift+A / Menu Edit)">
+          <span class="hud-dot">●</span>
+          <span>AUTO: <strong id="autoAdvanceStatusText">ON</strong></span>
+        </button>
+
+        <!-- Viewer Filter & Sort Compact Pill -->
+        <button id="btnToggleViewerFilter" class="btn-hud btn-hud-filter" title="Buka/Tutup Filter &amp; Sort (Shift+F / Menu View)">
+          <span>🔍 FILTER</span>
+        </button>
+
+        <!-- Toggle Sidebar Compact Pill -->
+        <button id="btnToggleSidebar" class="btn-hud btn-hud-sidebar active" title="Buka/Tutup Daftar Seleksi (Tab / Menu View)">
           <span>DAFTAR</span>
         </button>
-        <button id="btnUndo" class="btn btn-icon" title="Undo aksi terakhir (Ctrl+Z / Stick L3)" disabled>
-          <span>UNDO</span>
-        </button>
-        <button id="btnSettings" class="btn btn-icon" title="Pengaturan Tombol & Controller (,)">
-          <span>⚙</span>
-        </button>
-        <button id="btnHelp" class="btn btn-icon" title="Panduan Tombol & Shortcut (H / ?)">
-          <span>?</span>
-        </button>
-        <button id="btnExport" class="btn btn-primary" title="Export / Pindahkan foto (Start / X)" disabled>
+
+        <!-- Export Action Button -->
+        <button id="btnExport" class="btn btn-tiny btn-primary" title="Export Foto (Ctrl+E / Start)" disabled>
           <span>EXPORT</span>
         </button>
       </div>
     </header>
+
+    <!-- Slim Hairline Progress Bar Under Top Header -->
+    <div id="topProgressBar" class="top-progress-bar hidden" title="Progres Culling">
+      <div id="topProgressFillPick" class="top-bar-fill fill-pick" style="width: 0%"></div>
+      <div id="topProgressFillMaybe" class="top-bar-fill fill-maybe" style="width: 0%"></div>
+      <div id="topProgressFillReject" class="top-bar-fill fill-reject" style="width: 0%"></div>
+    </div>
+
+    <!-- Viewer Filter & Sort Toolbar (Collapsible / Toggleable) -->
+    <div id="viewerFilterToolbar" class="viewer-filter-toolbar hidden">
+      <div class="filter-toolbar-section">
+        <span class="toolbar-label">FILTER:</span>
+        <div class="filter-pills" id="viewerFilterPills">
+          <button class="filter-pill active" data-filter="all">Semua (<span id="vfCountAll">0</span>)</button>
+          <button class="filter-pill pill-unmarked" data-filter="unmarked">Belum Ditinjau (<span id="vfCountUnmarked">0</span>)</button>
+          <button class="filter-pill pill-pick" data-filter="pick">Pick (<span id="vfCountPick">0</span>)</button>
+          <button class="filter-pill pill-reject" data-filter="reject">Reject (<span id="vfCountReject">0</span>)</button>
+          <button class="filter-pill pill-maybe" data-filter="maybe">Maybe (<span id="vfCountMaybe">0</span>)</button>
+        </div>
+      </div>
+
+      <div class="filter-toolbar-divider"></div>
+
+      <div class="filter-toolbar-section">
+        <span class="toolbar-label">SORT:</span>
+        <select id="viewerSortSelect" class="toolbar-select" title="Urutan foto di viewer">
+          <option value="name-asc">Nama (A → Z)</option>
+          <option value="name-desc">Nama (Z → A)</option>
+          <option value="date-desc">Waktu (Terbaru → Terlama)</option>
+          <option value="date-asc">Waktu (Terlama → Terbaru)</option>
+          <option value="size-desc">Ukuran (Terbesar → Terkecil)</option>
+          <option value="size-asc">Ukuran (Terkecil → Terbesar)</option>
+          <option value="status">Status (Pick → Maybe → Reject → Kosong)</option>
+        </select>
+      </div>
+
+      <div class="filter-toolbar-section filter-toolbar-info">
+        <span id="viewerFilterInfoText" class="filter-info-badge">Menampilkan 0/0 foto</span>
+        <button id="btnCloseViewerFilter" class="btn-tiny" title="Tutup Toolbar Filter &amp; Sort">&times; Tutup</button>
+      </div>
+    </div>
 
     <!-- Main Workspace -->
     <main class="main-workspace">
@@ -135,6 +185,14 @@
         <div class="preloader-container" aria-hidden="true">
           <img id="preloadNext" alt="" />
           <img id="preloadPrev" alt="" />
+        </div>
+
+        <!-- Filter Empty State Message -->
+        <div id="viewerFilterEmptyState" class="viewer-filter-empty hidden">
+          <div class="empty-filter-icon">🔍</div>
+          <h3>Tidak ada foto yang cocok</h3>
+          <p id="viewerFilterEmptyDesc">Tidak ada foto dengan filter ini.</p>
+          <button id="btnResetViewerFilter" class="btn btn-secondary btn-tiny">Tampilkan Semua Foto</button>
         </div>
       </div>
 
@@ -321,6 +379,8 @@
                 <tr><td><kbd>R</kbd></td><td>Reset zoom</td></tr>
                 <tr><td><kbd>Ctrl + O</kbd></td><td>📁 Buka folder</td></tr>
                 <tr><td><kbd>,</kbd> (Koma)</td><td>⚙️ Pengaturan tombol kustom</td></tr>
+                <tr><td><kbd>Shift + A</kbd></td><td>⏭ Toggle Auto-Advance (ON/OFF)</td></tr>
+                <tr><td><kbd>Shift + F</kbd></td><td>🔍 Buka/Tutup Filter &amp; Sort Viewer</td></tr>
                 <tr><td><kbd>H</kbd> / <kbd>?</kbd></td><td>Buka panduan ini</td></tr>
               </table>
             </div>
@@ -341,6 +401,12 @@
           <button id="btnCloseSettingsModal" class="modal-close-btn">&times;</button>
         </div>
         <div class="modal-body settings-body">
+          <div class="settings-general-options">
+            <label class="settings-checkbox-label">
+              <input type="checkbox" id="chkSettingsAutoAdvance" checked>
+              <span><strong>Auto-advance</strong> — otomatis berpindah ke foto berikutnya setelah menandai (Pick/Reject/Maybe)</span>
+            </label>
+          </div>
           <div class="settings-tabs">
             <button id="tabSettingsKeyboard" class="settings-tab-btn active">⌨️ Keyboard</button>
             <button id="tabSettingsGamepad" class="settings-tab-btn">🎮 Joystick / Gamepad</button>

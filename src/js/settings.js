@@ -73,6 +73,16 @@ class SettingsManager {
       });
     }
 
+    // Auto-advance checkbox
+    const chkAutoAdvance = document.getElementById('chkSettingsAutoAdvance');
+    if (chkAutoAdvance) {
+      chkAutoAdvance.addEventListener('change', (e) => {
+        if (window.selectionManager) {
+          window.selectionManager.setAutoAdvance(e.target.checked);
+        }
+      });
+    }
+
     // Cancel recording button
     const btnCancelRecording = document.getElementById('btnCancelRecording');
     if (btnCancelRecording) {
@@ -102,6 +112,10 @@ class SettingsManager {
   openModal() {
     if (!this.modal) return;
     this.stopRecording();
+    const chkAutoAdvance = document.getElementById('chkSettingsAutoAdvance');
+    if (chkAutoAdvance && window.selectionManager) {
+      chkAutoAdvance.checked = window.selectionManager.autoAdvance;
+    }
     this.modal.classList.remove('hidden');
     this.renderList();
   }

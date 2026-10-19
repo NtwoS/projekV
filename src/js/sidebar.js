@@ -167,7 +167,11 @@ class SidebarManager {
     // Click card to jump to photo
     card.addEventListener('click', (e) => {
       if (e.target.closest('.btn-item-action')) return;
-      window.photoManager.showPhoto(index);
+      if (window.photoManager && window.photoManager.showPhotoByFilename) {
+        window.photoManager.showPhotoByFilename(photo.filename);
+      } else {
+        window.photoManager.showPhoto(index);
+      }
     });
 
     // Quick action buttons

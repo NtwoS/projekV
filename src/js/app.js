@@ -78,6 +78,93 @@ class App {
         case 'toggle-sidebar':
           if (window.sidebarManager) window.sidebarManager.toggle();
           break;
+        case 'toggle-autoadvance':
+          if (window.selectionManager) window.selectionManager.toggleAutoAdvance();
+          break;
+        case 'toggle-viewer-filter':
+          if (window.photoManager) window.photoManager.toggleFilterToolbar();
+          break;
+        case 'refresh-folder':
+          if (window.photoManager && window.photoManager.folderPath) {
+            this.loadFolder(window.photoManager.folderPath);
+          }
+          break;
+        case 'open-in-explorer':
+          if (window.photoManager && window.photoManager.folderPath && window.electronAPI && window.electronAPI.openFolderInExplorer) {
+            window.electronAPI.openFolderInExplorer(window.photoManager.folderPath);
+          }
+          break;
+        case 'filter-all':
+          if (window.photoManager) {
+            if (!window.photoManager.isFilterActive) window.photoManager.toggleFilterToolbar(true);
+            window.photoManager.setFilter('all');
+          }
+          break;
+        case 'filter-unmarked':
+          if (window.photoManager) {
+            if (!window.photoManager.isFilterActive) window.photoManager.toggleFilterToolbar(true);
+            window.photoManager.setFilter('unmarked');
+          }
+          break;
+        case 'filter-pick':
+          if (window.photoManager) {
+            if (!window.photoManager.isFilterActive) window.photoManager.toggleFilterToolbar(true);
+            window.photoManager.setFilter('pick');
+          }
+          break;
+        case 'filter-reject':
+          if (window.photoManager) {
+            if (!window.photoManager.isFilterActive) window.photoManager.toggleFilterToolbar(true);
+            window.photoManager.setFilter('reject');
+          }
+          break;
+        case 'filter-maybe':
+          if (window.photoManager) {
+            if (!window.photoManager.isFilterActive) window.photoManager.toggleFilterToolbar(true);
+            window.photoManager.setFilter('maybe');
+          }
+          break;
+        case 'sort-name-asc':
+          if (window.photoManager) {
+            if (!window.photoManager.isFilterActive) window.photoManager.toggleFilterToolbar(true);
+            window.photoManager.setSort('name-asc');
+          }
+          break;
+        case 'sort-name-desc':
+          if (window.photoManager) {
+            if (!window.photoManager.isFilterActive) window.photoManager.toggleFilterToolbar(true);
+            window.photoManager.setSort('name-desc');
+          }
+          break;
+        case 'sort-date-desc':
+          if (window.photoManager) {
+            if (!window.photoManager.isFilterActive) window.photoManager.toggleFilterToolbar(true);
+            window.photoManager.setSort('date-desc');
+          }
+          break;
+        case 'sort-date-asc':
+          if (window.photoManager) {
+            if (!window.photoManager.isFilterActive) window.photoManager.toggleFilterToolbar(true);
+            window.photoManager.setSort('date-asc');
+          }
+          break;
+        case 'sort-size-desc':
+          if (window.photoManager) {
+            if (!window.photoManager.isFilterActive) window.photoManager.toggleFilterToolbar(true);
+            window.photoManager.setSort('size-desc');
+          }
+          break;
+        case 'sort-status':
+          if (window.photoManager) {
+            if (!window.photoManager.isFilterActive) window.photoManager.toggleFilterToolbar(true);
+            window.photoManager.setSort('status');
+          }
+          break;
+        case 'toggle-filmstrip':
+          if (this.bottomBar) {
+            this.bottomBar.classList.toggle('hidden');
+          }
+          break;
       }
     });
   }
@@ -87,6 +174,11 @@ class App {
     const btnOpenFolder = document.getElementById('btnOpenFolder');
     if (btnOpenFolder) {
       btnOpenFolder.addEventListener('click', () => this.openFolderDialog());
+    }
+
+    const folderInfo = document.getElementById('folderInfo');
+    if (folderInfo) {
+      folderInfo.addEventListener('click', () => this.openFolderDialog());
     }
 
     const btnEmptyOpenFolder = document.getElementById('btnEmptyOpenFolder');

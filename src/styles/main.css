@@ -62,74 +62,73 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 42px;
-  padding: 0 12px;
+  height: 30px;
+  padding: 0 10px;
   background-color: var(--bg-surface);
   border-bottom: 1px solid var(--border-subtle);
   z-index: 20;
-  gap: 12px;
+  gap: 8px;
 }
 
 .top-bar-left, .top-bar-right {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
   gap: 6px;
-  margin-right: 4px;
 }
 
-.logo-icon {
-  font-size: 15px;
-  filter: grayscale(100%);
-}
-
-.logo-title {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 12px;
-  letter-spacing: 1px;
-}
-
-.logo-title strong {
-  color: #a1a1aa;
-  font-weight: 400;
+.top-bar-left {
+  flex-shrink: 0;
 }
 
 .folder-info {
-  max-width: 220px;
+  max-width: 260px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   background-color: var(--bg-card);
-  padding: 3px 8px;
+  padding: 2px 8px;
   border-radius: var(--radius-xs);
   font-size: 11px;
   font-family: var(--font-mono);
   color: var(--text-secondary);
   border: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-/* Stats Bar (Compact Monospace) */
+.folder-info.clickable {
+  cursor: pointer;
+}
+
+.folder-info.clickable:hover {
+  background-color: var(--bg-elevated);
+  border-color: var(--border-medium);
+  color: #ffffff;
+}
+
+.folder-icon {
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* Stats Bar (Ultra-Slim Centered HUD) */
 .stats-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   background-color: var(--bg-card);
-  padding: 3px 10px;
+  padding: 2px 8px;
+  height: 22px;
   border-radius: var(--radius-xs);
   border: 1px solid var(--border-subtle);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .stat-divider {
   width: 1px;
-  height: 12px;
+  height: 10px;
   background-color: var(--border-medium);
 }
 
@@ -1402,6 +1401,308 @@ kbd {
 
 .settings-footer {
   justify-content: space-between;
+}
+
+/* ==========================================================================
+   Culling Progress Bar & Indicator
+   ========================================================================== */
+
+.culling-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.culling-progress-track {
+  width: 90px;
+  height: 6px;
+  background-color: #27272a;
+  border-radius: 2px;
+  overflow: hidden;
+  display: flex;
+}
+
+.culling-bar-segment {
+  height: 100%;
+}
+
+.segment-pick {
+  background-color: #ffffff;
+}
+
+.segment-maybe {
+  background-color: #a1a1aa;
+}
+
+.segment-reject {
+  background-color: #52525c;
+}
+
+.culling-progress-text {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-main);
+  min-width: 32px;
+}
+
+/* Slim Hairline Progress Bar Under Header */
+.top-progress-bar {
+  position: relative;
+  width: 100%;
+  height: 2px;
+  background-color: #18181b;
+  display: flex;
+  z-index: 19;
+}
+
+.top-bar-fill {
+  height: 100%;
+}
+
+.fill-pick {
+  background-color: #ffffff;
+}
+
+.fill-maybe {
+  background-color: #a1a1aa;
+}
+
+.fill-reject {
+  background-color: #52525c;
+}
+
+/* ==========================================================================
+   Ultra-Slim HUD Buttons & Badges
+   ========================================================================== */
+
+.btn-hud {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  height: 22px;
+  border-radius: var(--radius-xs);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.btn-hud:hover {
+  background-color: var(--bg-elevated);
+  border-color: var(--border-medium);
+  color: #ffffff;
+}
+
+.btn-hud.active {
+  background-color: var(--bg-elevated);
+  border-color: var(--border-medium);
+  color: #ffffff;
+}
+
+.btn-hud-filter.active {
+  background-color: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+  font-weight: 700;
+}
+
+.hud-dot {
+  font-size: 7px;
+  line-height: 1;
+  color: #71717a;
+}
+
+.btn-hud-autoadvance.active .hud-dot {
+  color: #22c55e;
+}
+
+.btn-hud-autoadvance:not(.active) {
+  opacity: 0.6;
+  color: var(--text-dim);
+}
+
+.btn-hud-autoadvance:not(.active) .hud-dot {
+  color: #71717a;
+}
+
+/* ==========================================================================
+   Viewer Filter & Sort Toolbar
+   ========================================================================== */
+
+.viewer-filter-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 38px;
+  padding: 0 12px;
+  background-color: #111114;
+  border-bottom: 1px solid var(--border-medium);
+  z-index: 18;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.filter-toolbar-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toolbar-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+}
+
+.filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.filter-pill {
+  padding: 3px 8px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  background-color: var(--bg-card);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  cursor: pointer;
+}
+
+.filter-pill:hover {
+  background-color: var(--bg-elevated);
+  color: var(--text-main);
+  border-color: var(--border-medium);
+}
+
+.filter-pill.active {
+  background-color: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+  font-weight: 700;
+}
+
+.filter-pill.pill-pick.active {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.filter-pill.pill-reject.active {
+  background-color: #52525c;
+  color: #ffffff;
+  border-color: #71717a;
+}
+
+.filter-pill.pill-maybe.active {
+  background-color: #a1a1aa;
+  color: #000000;
+  border-color: #a1a1aa;
+}
+
+.filter-toolbar-divider {
+  width: 1px;
+  height: 16px;
+  background-color: var(--border-medium);
+}
+
+.toolbar-select {
+  background-color: var(--bg-card);
+  color: var(--text-main);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  padding: 3px 8px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  outline: none;
+  cursor: pointer;
+}
+
+.toolbar-select:hover {
+  border-color: var(--border-hover);
+}
+
+.filter-toolbar-info {
+  margin-left: auto;
+}
+
+.filter-info-badge {
+  font-size: 10px;
+  color: var(--text-dim);
+  padding: 2px 6px;
+  background-color: var(--bg-card);
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-subtle);
+}
+
+/* Viewer Empty Filter Message */
+.viewer-filter-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--text-dim);
+  gap: 10px;
+  background-color: #080808;
+  z-index: 8;
+  padding: 20px;
+}
+
+.empty-filter-icon {
+  font-size: 32px;
+  opacity: 0.6;
+}
+
+.viewer-filter-empty h3 {
+  font-size: 15px;
+  color: var(--text-main);
+  font-weight: 600;
+}
+
+.viewer-filter-empty p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+/* Settings General Options */
+.settings-general-options {
+  padding: 10px 12px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  margin-bottom: 12px;
+}
+
+.settings-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-main);
+  cursor: pointer;
+  font-family: var(--font-ui);
+}
+
+.settings-checkbox-label input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: #ffffff;
+  width: 14px;
+  height: 14px;
 }
 
 /* Utility Classes */
