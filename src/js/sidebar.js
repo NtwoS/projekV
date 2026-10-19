@@ -17,6 +17,23 @@ class SidebarManager {
     this.isOpen = true;
     this.cardMap = new Map(); // filename -> DOM Card Element (avoids re-creating images!)
 
+    // IntersectionObserver for lazy thumbnail loading
+    this.thumbObserver = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          if (img.dataset.src && !img.src) {
+            img.decoding = 'async';
+            img.src = img.dataset.src;
+          }
+          this.thumbObserver.unobserve(img);
+        }
+      }
+    }, {
+      root: this.sidebarList,
+      rootMargin: '200px 0px'
+    });
+
     this.initEventListeners();
   }
 
@@ -147,7 +164,7 @@ class SidebarManager {
     const thumbUrl = window.electronAPI.toPhotoUrl(photo.fullPath);
 
     card.innerHTML = `
-      <img class="sidebar-thumb" src="${thumbUrl}" alt="${photo.filename}" loading="lazy" decoding="async" />
+      <img class="sidebar-thumb" data-src="${thumbUrl}" alt="${photo.filename}" />
       <div class="sidebar-info">
         <div class="sidebar-item-header">
           <span class="sidebar-item-index">${index + 1}</span>
@@ -163,6 +180,10 @@ class SidebarManager {
         <button class="btn-item-action btn-change-clear" title="Hapus Status">—</button>
       </div>
     `;
+
+    // Observe thumbnail for lazy loading
+    const thumbImg = card.querySelector('.sidebar-thumb');
+    if (thumbImg) this.thumbObserver.observe(thumbImg);
 
     // Click card to jump to photo
     card.addEventListener('click', (e) => {
@@ -231,6 +252,7 @@ class SidebarManager {
     if (!this.isOpen) return;
 
     this.updateCounts();
+    this.thumbObserver.disconnect();
     this.sidebarList.innerHTML = '';
     this.cardMap.clear();
 

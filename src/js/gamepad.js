@@ -14,6 +14,11 @@ class GamepadHandler {
     this.gamepadBadge = document.getElementById('gamepadBadge');
     this.gamepadNameText = document.getElementById('gamepadNameText');
 
+    // Cache modal refs — avoid getElementById every frame at 60fps
+    this.exportModal = document.getElementById('exportModal');
+    this.helpModal = document.getElementById('helpModal');
+    this.settingsModal = document.getElementById('settingsModal');
+
     this.init();
   }
 
@@ -98,14 +103,10 @@ class GamepadHandler {
       return;
     }
 
-    // Check if any modal is open
-    const exportModal = document.getElementById('exportModal');
-    const helpModal = document.getElementById('helpModal');
-    const settingsModal = document.getElementById('settingsModal');
-
-    const isModalOpen = (exportModal && !exportModal.classList.contains('hidden')) ||
-                        (helpModal && !helpModal.classList.contains('hidden')) ||
-                        (settingsModal && !settingsModal.classList.contains('hidden'));
+    // Use cached modal refs instead of querying DOM every frame
+    const isModalOpen = (this.exportModal && !this.exportModal.classList.contains('hidden')) ||
+                        (this.helpModal && !this.helpModal.classList.contains('hidden')) ||
+                        (this.settingsModal && !this.settingsModal.classList.contains('hidden'));
 
     // 1. Process Buttons (edge-triggered: only fires on button-down transition)
     const currentButtons = gp.buttons.map(b => (typeof b === 'object' ? b.pressed : b === 1.0));

@@ -899,7 +899,9 @@ body {
   cursor: pointer;
   background-color: #000000;
   border: 1px solid var(--border-subtle);
-  contain: paint;
+  contain: strict;
+  content-visibility: auto;
+  contain-intrinsic-size: 64px 50px;
 }
 
 .filmstrip-item img {
