@@ -61,6 +61,13 @@ class KeyboardHandler {
       return;
     }
 
+    // Toggle Sidebar: Tab or 'L'
+    if (e.key === 'Tab' || e.key.toLowerCase() === 'l') {
+      e.preventDefault();
+      if (window.sidebarManager) window.sidebarManager.toggle();
+      return;
+    }
+
     // Export: 'X' (with Ctrl) or 'P'
     if ((e.ctrlKey && e.key.toLowerCase() === 'e') || e.key.toLowerCase() === 'p') {
       e.preventDefault();

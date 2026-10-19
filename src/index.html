@@ -58,6 +58,9 @@
           <span id="gamepadNameText" class="gp-text">Controller Offline</span>
         </div>
 
+        <button id="btnToggleSidebar" class="btn btn-secondary active" title="Buka/Tutup Daftar Seleksi (Tab / L)">
+          <span>📋 Daftar</span>
+        </button>
         <button id="btnUndo" class="btn btn-icon" title="Undo aksi terakhir (Ctrl+Z / Stick L3)" disabled>
           <span>↩</span>
         </button>
@@ -133,6 +136,40 @@
           <img id="preloadPrev" alt="" />
         </div>
       </div>
+
+      <!-- Right Sidebar: Reviewed Photos List -->
+      <aside id="sidebarRight" class="sidebar-right hidden">
+        <div class="sidebar-header">
+          <div class="sidebar-title">
+            <span class="sidebar-icon">📋</span>
+            <span>Daftar Seleksi</span>
+          </div>
+          <button id="btnCloseSidebar" class="sidebar-close-btn" title="Tutup Panel (Tab / L)">›</button>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="sidebar-filters">
+          <button class="sidebar-filter-btn active" data-filter="all">Semua (<span id="filterCountAll">0</span>)</button>
+          <button class="sidebar-filter-btn filter-pick" data-filter="pick">Pick (<span id="filterCountPick">0</span>)</button>
+          <button class="sidebar-filter-btn filter-reject" data-filter="reject">Reject (<span id="filterCountReject">0</span>)</button>
+          <button class="sidebar-filter-btn filter-maybe" data-filter="maybe">Ragu (<span id="filterCountMaybe">0</span>)</button>
+        </div>
+
+        <!-- Scrollable List of Reviewed Items -->
+        <div id="sidebarList" class="sidebar-list">
+          <div class="sidebar-empty">
+            <span class="sidebar-empty-icon">📂</span>
+            <p>Belum ada foto yang dipilih.</p>
+          </div>
+        </div>
+
+        <!-- Sidebar Footer Action -->
+        <div class="sidebar-footer">
+          <button id="btnSidebarExport" class="btn btn-primary btn-block" title="Export Foto">
+            <span>📦 Export Hasil Seleksi</span>
+          </button>
+        </div>
+      </aside>
     </main>
 
     <!-- Bottom Actions Bar & Filmstrip -->
@@ -310,6 +347,7 @@
   <script src="js/gamepad.js"></script>
   <script src="js/keyboard.js"></script>
   <script src="js/export.js"></script>
+  <script src="js/sidebar.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

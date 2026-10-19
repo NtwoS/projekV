@@ -133,6 +133,13 @@ function buildAppMenu(windowInstance) {
           }
         },
         { type: 'separator' },
+        {
+          label: '&Toggle Panel Seleksi',
+          accelerator: 'Tab',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'toggle-sidebar');
+          }
+        },
         { label: '&Layar Penuh (Toggle Full Screen)', role: 'togglefullscreen' },
         { label: 'Toggle Developer &Tools', role: 'toggleDevTools' },
         { label: '&Reload Halaman', role: 'reload' }

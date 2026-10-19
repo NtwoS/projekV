@@ -36,6 +36,9 @@ class SelectionManager {
 
     this.updateStats();
     this.updateUndoButton();
+    if (window.sidebarManager) {
+      window.sidebarManager.render();
+    }
   }
 
   getSelection(filename) {
@@ -74,6 +77,11 @@ class SelectionManager {
     this.updateViewerBorder();
     this.updateStats();
 
+    // Update right sidebar
+    if (window.sidebarManager) {
+      window.sidebarManager.render();
+    }
+
     // Persist data
     this.persist();
 
@@ -111,6 +119,11 @@ class SelectionManager {
     }
     this.updateViewerBorder();
     this.updateStats();
+
+    // Update right sidebar
+    if (window.sidebarManager) {
+      window.sidebarManager.render();
+    }
 
     // Persist data
     this.persist();

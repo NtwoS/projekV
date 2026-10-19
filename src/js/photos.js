@@ -128,6 +128,9 @@ class PhotoManager {
       window.selectionManager.updateViewerBorder();
       window.selectionManager.updateStats();
     }
+    if (window.sidebarManager) {
+      window.sidebarManager.highlightCurrent(index);
+    }
 
     return true;
   }

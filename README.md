@@ -13,6 +13,7 @@ Aplikasi desktop **super ringan** dan responsif untuk menyeleksi (culling) foto 
   - ❌ **Reject** (Merah) — Foto ditolak/dihapus
   - 🤔 **Maybe** (Kuning) — Ragu-ragu, untuk ditinjau kembali
   - ⚪ **Reset** — Menghapus status penandaan
+- 📋 **Sidebar Panel Kanan (Daftar Seleksi)**: Panel samping kanan untuk melihat secara langsung ringkasan foto yang telah dipilih (Pick), ditolak (Reject), maupun ragu-ragu (Maybe) lengkap dengan filter kategori, thumbnail, dan aksi cepat.
 - 🎞️ **Filmstrip Interaktif**: Strip thumbnail horizontal di bagian bawah layar dengan kode warna status dan navigasi klik langsung.
 - ⚡ **Zero-Latency Preloading**: Preload otomatis untuk foto berikutnya dan sebelumnya agar perpindahan foto instan tanpa jeda.
 - 🔍 **Zoom & Pan Detail**: Perbesar foto hingga 500% via analog stick, D-Pad, atau mouse wheel untuk memeriksa fokus dan ketajaman.
@@ -49,6 +50,7 @@ Aplikasi desktop **super ringan** dan responsif untuk menyeleksi (culling) foto 
 | `↓` atau `0` atau `S` | ⚪ **Reset** status penandaan |
 | `Space` atau `E` atau `PageDown` | ➡️ Foto berikutnya |
 | `Q` atau `PageUp` | ⬅️ Foto sebelumnya |
+| `Tab` atau `L` | 📋 Buka / tutup Panel Daftar Seleksi (Sidebar Kanan) |
 | `Ctrl + Z` | ↩️ Undo aksi terakhir |
 | `+` / `-` / `Mouse Wheel` | 🔍 Zoom in / out |
 | `R` | Reset zoom ke 100% |

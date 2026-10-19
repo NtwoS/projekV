@@ -64,6 +64,9 @@ class App {
         case 'show-help':
           this.toggleHelpModal();
           break;
+        case 'toggle-sidebar':
+          if (window.sidebarManager) window.sidebarManager.toggle();
+          break;
       }
     });
   }
@@ -197,6 +200,10 @@ class App {
 
     this.folderPathText.textContent = folderPath;
     this.folderPathText.title = folderPath;
+
+    if (window.sidebarManager) {
+      window.sidebarManager.show();
+    }
 
     // Resume from saved index or start from 0
     let startIndex = 0;
