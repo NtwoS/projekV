@@ -60,6 +60,9 @@
         <button id="btnUndo" class="btn btn-icon" title="Undo aksi terakhir (Ctrl+Z / Stick L3)" disabled>
           <span>UNDO</span>
         </button>
+        <button id="btnSettings" class="btn btn-icon" title="Pengaturan Tombol & Controller (,)">
+          <span>⚙</span>
+        </button>
         <button id="btnHelp" class="btn btn-icon" title="Panduan Tombol & Shortcut (H / ?)">
           <span>?</span>
         </button>
@@ -172,33 +175,33 @@
     <footer id="bottomBar" class="bottom-bar hidden">
       <!-- Quick Action Controls Banner -->
       <div class="controls-toolbar">
-        <button id="btnNavPrev" class="ctrl-btn nav-btn" title="Foto Sebelumnya (LB / Q)">
-          <span class="key-badge">LB/Q</span>
+        <button id="btnNavPrev" class="ctrl-btn nav-btn" title="Foto Sebelumnya">
+          <span id="badgeNavPrev" class="key-badge">LB/Q</span>
           <span class="ctrl-label">PREV</span>
         </button>
 
         <div class="selection-action-group">
-          <button id="btnActionReject" class="ctrl-btn btn-action-reject" title="Tolak Foto (B / 2 / A)">
-            <span class="key-badge">B/2</span>
+          <button id="btnActionReject" class="ctrl-btn btn-action-reject" title="Tolak Foto">
+            <span id="badgeActionReject" class="key-badge">B/2</span>
             <span class="ctrl-label">REJECT</span>
           </button>
-          <button id="btnActionMaybe" class="ctrl-btn btn-action-maybe" title="Ragu-ragu (Y / 3 / W)">
-            <span class="key-badge">Y/3</span>
+          <button id="btnActionMaybe" class="ctrl-btn btn-action-maybe" title="Ragu-ragu">
+            <span id="badgeActionMaybe" class="key-badge">Y/3</span>
             <span class="ctrl-label">MAYBE</span>
           </button>
-          <button id="btnActionPick" class="ctrl-btn btn-action-pick" title="Pilih Foto (A / 1 / D)">
-            <span class="key-badge">A/1</span>
+          <button id="btnActionPick" class="ctrl-btn btn-action-pick" title="Pilih Foto">
+            <span id="badgeActionPick" class="key-badge">A/1</span>
             <span class="ctrl-label">PICK</span>
           </button>
-          <button id="btnActionReset" class="ctrl-btn btn-action-reset" title="Hapus Status (X / 0 / S)">
-            <span class="key-badge">X/0</span>
+          <button id="btnActionReset" class="ctrl-btn btn-action-reset" title="Hapus Status">
+            <span id="badgeActionReset" class="key-badge">X/0</span>
             <span class="ctrl-label">RESET</span>
           </button>
         </div>
 
-        <button id="btnNavNext" class="ctrl-btn nav-btn" title="Foto Berikutnya (RB / E / Space)">
+        <button id="btnNavNext" class="ctrl-btn nav-btn" title="Foto Berikutnya">
           <span class="ctrl-label">NEXT</span>
-          <span class="key-badge">RB/E</span>
+          <span id="badgeNavNext" class="key-badge">RB/E</span>
         </button>
       </div>
 
@@ -317,13 +320,58 @@
                 <tr><td><kbd>+</kbd> / <kbd>-</kbd> / Wheel</td><td>🔍 Zoom in / out</td></tr>
                 <tr><td><kbd>R</kbd></td><td>Reset zoom</td></tr>
                 <tr><td><kbd>Ctrl + O</kbd></td><td>📁 Buka folder</td></tr>
+                <tr><td><kbd>,</kbd> (Koma)</td><td>⚙️ Pengaturan tombol kustom</td></tr>
                 <tr><td><kbd>H</kbd> / <kbd>?</kbd></td><td>Buka panduan ini</td></tr>
               </table>
             </div>
           </div>
         </div>
-        <div class="modal-footer">
+        <div class="modal-footer" style="justify-content: space-between;">
+          <button id="btnHelpToSettings" class="btn btn-secondary">⚙️ Sesuaikan Tombol (Settings)</button>
           <button id="btnCloseHelpBtn" class="btn btn-primary">Mengerti</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal-overlay hidden">
+      <div class="modal-card modal-large settings-card">
+        <div class="modal-header">
+          <h3>⚙️ Pengaturan Tombol &amp; Controller</h3>
+          <button id="btnCloseSettingsModal" class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body settings-body">
+          <div class="settings-tabs">
+            <button id="tabSettingsKeyboard" class="settings-tab-btn active">⌨️ Keyboard</button>
+            <button id="tabSettingsGamepad" class="settings-tab-btn">🎮 Joystick / Gamepad</button>
+          </div>
+          <div class="settings-table-container">
+            <table class="settings-table">
+              <thead>
+                <tr>
+                  <th style="width: 38%;">Aksi</th>
+                  <th style="width: 38%;">Tombol</th>
+                  <th style="width: 24%; text-align: right;">Ubah</th>
+                </tr>
+              </thead>
+              <tbody id="settingsTableBody">
+                <!-- Dynamically populated by settings.js -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Recording Prompt Overlay -->
+          <div id="settingsRecordingOverlay" class="recording-overlay hidden">
+            <div class="recording-box">
+              <div class="recording-pulse-indicator">●</div>
+              <p id="settingsRecordingPrompt" class="recording-prompt">Tekan tombol...</p>
+              <button id="btnCancelRecording" class="btn btn-secondary btn-tiny">Batal (Esc)</button>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer settings-footer">
+          <button id="btnResetKeybindings" class="btn btn-secondary">Kembalikan Bawaan</button>
+          <button id="btnFinishSettings" class="btn btn-primary">Selesai &amp; Tutup</button>
         </div>
       </div>
     </div>
@@ -336,6 +384,8 @@
   <script src="js/photos.js"></script>
   <script src="js/selection.js"></script>
   <script src="js/filmstrip.js"></script>
+  <script src="js/keybindings.js"></script>
+  <script src="js/settings.js"></script>
   <script src="js/gamepad.js"></script>
   <script src="js/keyboard.js"></script>
   <script src="js/export.js"></script>

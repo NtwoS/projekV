@@ -1,4 +1,5 @@
 // Keyboard & Mouse Shortcut Handler (Supports full operation without a joystick)
+// Powered by dynamic KeybindingsManager for full customizability
 class KeyboardHandler {
   constructor() {
     this.init();
@@ -25,8 +26,18 @@ class KeyboardHandler {
     // If typing in an input field, do not capture shortcuts
     if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
 
-    const isModalOpen = !document.getElementById('exportModal').classList.contains('hidden') ||
-                        !document.getElementById('helpModal').classList.contains('hidden');
+    // If Settings modal is actively recording a keypress, skip normal handling
+    if (window.settingsManager && window.settingsManager.isRecording) {
+      return;
+    }
+
+    const exportModal = document.getElementById('exportModal');
+    const helpModal = document.getElementById('helpModal');
+    const settingsModal = document.getElementById('settingsModal');
+
+    const isModalOpen = (exportModal && !exportModal.classList.contains('hidden')) ||
+                        (helpModal && !helpModal.classList.contains('hidden')) ||
+                        (settingsModal && !settingsModal.classList.contains('hidden'));
 
     // Escape closes modals or resets zoom
     if (e.key === 'Escape') {
@@ -40,115 +51,91 @@ class KeyboardHandler {
 
     if (isModalOpen) return;
 
-    // Undo: Ctrl + Z
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
-      e.preventDefault();
-      window.selectionManager.undo();
-      return;
+    // Lookup action from keybindingsManager
+    const action = window.keybindingsManager
+      ? window.keybindingsManager.getActionForKeyboard(e)
+      : null;
+
+    if (!action) return;
+
+    // System & General actions (callable even when no photos loaded)
+    switch (action) {
+      case 'undo':
+        e.preventDefault();
+        if (window.selectionManager) window.selectionManager.undo();
+        return;
+
+      case 'openFolder':
+        e.preventDefault();
+        if (window.app) window.app.openFolderDialog();
+        return;
+
+      case 'help':
+        e.preventDefault();
+        if (window.app) window.app.toggleHelpModal();
+        return;
+
+      case 'settings':
+        e.preventDefault();
+        if (window.settingsManager) window.settingsManager.openModal();
+        return;
+
+      case 'toggleSidebar':
+        e.preventDefault();
+        if (window.sidebarManager) window.sidebarManager.toggle();
+        return;
+
+      case 'export':
+        e.preventDefault();
+        if (window.exportManager) window.exportManager.openModal();
+        return;
     }
 
-    // Open Folder: Ctrl + O or 'O'
-    if (((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'o') || (e.key.toLowerCase() === 'o' && !e.ctrlKey)) {
-      e.preventDefault();
-      window.app.openFolderDialog();
-      return;
-    }
-
-    // Help: 'H' or '?'
-    if (e.key.toLowerCase() === 'h' || e.key === '?') {
-      e.preventDefault();
-      window.app.toggleHelpModal();
-      return;
-    }
-
-    // Toggle Sidebar: Tab or 'L'
-    if (e.key === 'Tab' || e.key.toLowerCase() === 'l') {
-      e.preventDefault();
-      if (window.sidebarManager) window.sidebarManager.toggle();
-      return;
-    }
-
-    // Export: 'X' (with Ctrl) or 'P'
-    if ((e.ctrlKey && e.key.toLowerCase() === 'e') || e.key.toLowerCase() === 'p') {
-      e.preventDefault();
-      window.exportManager.openModal();
-      return;
-    }
-
-    // Don't process photo keys if no photos loaded
+    // Photo specific actions require loaded photos
     if (!window.photoManager || window.photoManager.photos.length === 0) return;
 
-    switch (e.key) {
-      // Pick: Right Arrow, '1', or 'D'
-      case 'ArrowRight':
-      case '1':
-      case 'd':
-      case 'D':
+    switch (action) {
+      case 'pick':
         e.preventDefault();
         window.selectionManager.mark('pick', true);
         break;
 
-      // Reject: Left Arrow, '2', or 'A'
-      case 'ArrowLeft':
-      case '2':
-      case 'a':
-      case 'A':
+      case 'reject':
         e.preventDefault();
         window.selectionManager.mark('reject', true);
         break;
 
-      // Maybe: Up Arrow, '3', or 'W'
-      case 'ArrowUp':
-      case '3':
-      case 'w':
-      case 'W':
+      case 'maybe':
         e.preventDefault();
         window.selectionManager.mark('maybe', true);
         break;
 
-      // Reset / Clear status: Down Arrow, '0', 'S', Delete, Backspace
-      case 'ArrowDown':
-      case '0':
-      case 's':
-      case 'S':
-      case 'Delete':
-      case 'Backspace':
+      case 'reset':
         e.preventDefault();
         window.selectionManager.mark(null, false);
         break;
 
-      // Next Photo: Space, 'E', PageDown
-      case ' ':
-      case 'e':
-      case 'E':
-      case 'PageDown':
+      case 'next':
         e.preventDefault();
         window.photoManager.nextPhoto();
         break;
 
-      // Prev Photo: 'Q', PageUp
-      case 'q':
-      case 'Q':
-      case 'PageUp':
+      case 'prev':
         e.preventDefault();
         window.photoManager.prevPhoto();
         break;
 
-      // Zoom Controls
-      case '+':
-      case '=':
+      case 'zoomIn':
         e.preventDefault();
         window.photoManager.zoomIn(0.3);
         break;
 
-      case '-':
-      case '_':
+      case 'zoomOut':
         e.preventDefault();
         window.photoManager.zoomOut(0.3);
         break;
 
-      case 'r':
-      case 'R':
+      case 'resetZoom':
         e.preventDefault();
         window.photoManager.resetZoom();
         break;

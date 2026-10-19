@@ -14,10 +14,18 @@ class App {
     this.init();
   }
 
-  init() {
+  async init() {
     this.initButtons();
     this.initDragAndDrop();
     this.initMenuListeners();
+
+    if (window.keybindingsManager) {
+      await window.keybindingsManager.init();
+      this.updateToolbarKeyBadges();
+      window.keybindingsManager.onChange(() => {
+        this.updateToolbarKeyBadges();
+      });
+    }
   }
 
   initMenuListeners() {
@@ -64,6 +72,9 @@ class App {
         case 'show-help':
           this.toggleHelpModal();
           break;
+        case 'open-settings':
+          if (window.settingsManager) window.settingsManager.openModal();
+          break;
         case 'toggle-sidebar':
           if (window.sidebarManager) window.sidebarManager.toggle();
           break;
@@ -108,6 +119,14 @@ class App {
     const btnCloseHelpBtn = document.getElementById('btnCloseHelpBtn');
     if (btnCloseHelpBtn) {
       btnCloseHelpBtn.addEventListener('click', () => this.closeAllModals());
+    }
+
+    const btnHelpToSettings = document.getElementById('btnHelpToSettings');
+    if (btnHelpToSettings) {
+      btnHelpToSettings.addEventListener('click', () => {
+        this.closeAllModals();
+        if (window.settingsManager) window.settingsManager.openModal();
+      });
     }
 
     // Bottom action buttons
@@ -227,6 +246,40 @@ class App {
   closeAllModals() {
     document.getElementById('exportModal')?.classList.add('hidden');
     document.getElementById('helpModal')?.classList.add('hidden');
+    document.getElementById('settingsModal')?.classList.add('hidden');
+    if (window.settingsManager) window.settingsManager.stopRecording();
+  }
+
+  updateToolbarKeyBadges() {
+    const km = window.keybindingsManager;
+    if (!km || !km.bindings) return;
+
+    const bNavPrev = document.getElementById('badgeNavPrev');
+    const bActionReject = document.getElementById('badgeActionReject');
+    const bActionMaybe = document.getElementById('badgeActionMaybe');
+    const bActionPick = document.getElementById('badgeActionPick');
+    const bActionReset = document.getElementById('badgeActionReset');
+    const bNavNext = document.getElementById('badgeNavNext');
+
+    const getShortLabel = (action) => {
+      const keys = (km.bindings.keyboard && km.bindings.keyboard[action]) || [];
+      const primaryKey = keys.length > 0 ? km.formatKeyName(keys[0]) : '';
+      const gpBtn = km.bindings.gamepad && km.bindings.gamepad[action];
+      let gpLabel = '';
+      if (typeof gpBtn === 'number') {
+        const full = km.formatGamepadButton(gpBtn);
+        gpLabel = full.split(' ')[0] || '';
+      }
+      if (gpLabel && primaryKey) return `${gpLabel}/${primaryKey}`;
+      return gpLabel || primaryKey || '-';
+    };
+
+    if (bNavPrev) bNavPrev.textContent = getShortLabel('prev');
+    if (bActionReject) bActionReject.textContent = getShortLabel('reject');
+    if (bActionMaybe) bActionMaybe.textContent = getShortLabel('maybe');
+    if (bActionPick) bActionPick.textContent = getShortLabel('pick');
+    if (bActionReset) bActionReset.textContent = getShortLabel('reset');
+    if (bNavNext) bNavNext.textContent = getShortLabel('next');
   }
 
   showToast(message) {

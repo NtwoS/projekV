@@ -97,6 +97,14 @@ function buildAppMenu(windowInstance) {
           click: () => {
             windowInstance.webContents.send('menu:action', 'mark-reset');
           }
+        },
+        { type: 'separator' },
+        {
+          label: '&Pengaturan Tombol...',
+          accelerator: 'CmdOrCtrl+,',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'open-settings');
+          }
         }
       ]
     },
@@ -332,6 +340,41 @@ ipcMain.handle('storage:save', async (event, folderPath, data) => {
     return { success: true };
   } catch (err) {
     console.error('Error saving selection-data.json:', err);
+    return { success: false, error: err.message };
+  }
+});
+
+// Helper: path to keybindings.json in app userData
+function getKeybindingsFilePath() {
+  return path.join(app.getPath('userData'), 'keybindings.json');
+}
+
+// IPC: Load keybindings configuration
+ipcMain.handle('keybindings:load', async () => {
+  const filePath = getKeybindingsFilePath();
+  if (fs.existsSync(filePath)) {
+    try {
+      const content = await fs.promises.readFile(filePath, 'utf8');
+      return JSON.parse(content);
+    } catch (err) {
+      console.error('Error loading keybindings.json:', err);
+      return null;
+    }
+  }
+  return null;
+});
+
+// IPC: Save keybindings configuration
+ipcMain.handle('keybindings:save', async (event, data) => {
+  const filePath = getKeybindingsFilePath();
+  const tempPath = filePath + '.tmp';
+  try {
+    const jsonString = JSON.stringify(data, null, 2);
+    await fs.promises.writeFile(tempPath, jsonString, 'utf8');
+    await fs.promises.rename(tempPath, filePath);
+    return { success: true };
+  } catch (err) {
+    console.error('Error saving keybindings.json:', err);
     return { success: false, error: err.message };
   }
 });

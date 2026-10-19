@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveSelection: (folderPath, data) => ipcRenderer.invoke('storage:save', folderPath, data),
   exportPhotos: (params) => ipcRenderer.invoke('photos:export', params),
   showInFolder: (filePath) => ipcRenderer.invoke('photos:showInFolder', filePath),
+  loadKeybindings: () => ipcRenderer.invoke('keybindings:load'),
+  saveKeybindings: (data) => ipcRenderer.invoke('keybindings:save', data),
   
   // Helper to convert full local path to custom protocol URL
   toPhotoUrl: (fullPath) => {

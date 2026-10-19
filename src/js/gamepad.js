@@ -98,9 +98,14 @@ class GamepadHandler {
       return;
     }
 
-    // Modal open check: if modal is open, only allow modal navigation/escape
-    const isModalOpen = !document.getElementById('exportModal').classList.contains('hidden') ||
-                        !document.getElementById('helpModal').classList.contains('hidden');
+    // Check if any modal is open
+    const exportModal = document.getElementById('exportModal');
+    const helpModal = document.getElementById('helpModal');
+    const settingsModal = document.getElementById('settingsModal');
+
+    const isModalOpen = (exportModal && !exportModal.classList.contains('hidden')) ||
+                        (helpModal && !helpModal.classList.contains('hidden')) ||
+                        (settingsModal && !settingsModal.classList.contains('hidden'));
 
     // 1. Process Buttons (edge-triggered: only fires on button-down transition)
     const currentButtons = gp.buttons.map(b => (typeof b === 'object' ? b.pressed : b === 1.0));
@@ -110,7 +115,11 @@ class GamepadHandler {
 
       // On Press Down Event
       if (isPressed && !wasPressed) {
-        this.handleButtonPress(btnIndex, isModalOpen);
+        if (window.settingsManager && window.settingsManager.isRecordingGamepad) {
+          window.settingsManager.recordGamepadButton(btnIndex);
+        } else {
+          this.handleButtonPress(btnIndex, isModalOpen);
+        }
       }
     });
 
@@ -123,7 +132,7 @@ class GamepadHandler {
   }
 
   handleButtonPress(btnIndex, isModalOpen) {
-    // If modal is open, B button closes modal
+    // If modal is open, B button (or back) closes modal
     if (isModalOpen) {
       if (btnIndex === 1) { // B button
         window.app.closeAllModals();
@@ -131,69 +140,69 @@ class GamepadHandler {
       return;
     }
 
+    // Lookup action via keybindingsManager
+    const action = window.keybindingsManager
+      ? window.keybindingsManager.getActionForGamepad(btnIndex)
+      : null;
+
+    if (!action) return;
+
+    // System actions
+    if (action === 'undo') {
+      window.selectionManager.undo();
+      return;
+    }
+    if (action === 'help') {
+      window.app.toggleHelpModal();
+      return;
+    }
+    if (action === 'export') {
+      window.exportManager.openModal();
+      return;
+    }
+    if (action === 'settings') {
+      if (window.settingsManager) window.settingsManager.openModal();
+      return;
+    }
+
     // Don't process photo actions if no photos loaded
     if (!window.photoManager || window.photoManager.photos.length === 0) return;
 
-    switch (btnIndex) {
-      // Standard Face Buttons
-      case 0: // A button (Bottom) -> Pick ✅
+    switch (action) {
+      case 'pick':
         window.selectionManager.mark('pick', true);
         break;
 
-      case 1: // B button (Right) -> Reject ❌
+      case 'reject':
         window.selectionManager.mark('reject', true);
         break;
 
-      case 2: // X button (Left) -> Reset ⚪
-        window.selectionManager.mark(null, false);
-        break;
-
-      case 3: // Y button (Top) -> Maybe 🤔
+      case 'maybe':
         window.selectionManager.mark('maybe', true);
         break;
 
-      // Shoulder Bumpers
-      case 4: // LB (Left Bumper) -> Previous Photo
-        window.photoManager.prevPhoto();
+      case 'reset':
+        window.selectionManager.mark(null, false);
         break;
 
-      case 5: // RB (Right Bumper) -> Next Photo
+      case 'next':
         window.photoManager.nextPhoto();
         break;
 
-      // Stick Clicks
-      case 10: // L3 (Left Stick Click) -> Undo
-        window.selectionManager.undo();
+      case 'prev':
+        window.photoManager.prevPhoto();
         break;
 
-      case 11: // R3 (Right Stick Click) -> Reset Zoom
-        window.photoManager.resetZoom();
-        break;
-
-      // Center Buttons
-      case 8: // Back / View / Select -> Toggle Help Modal
-        window.app.toggleHelpModal();
-        break;
-
-      case 9: // Start / Menu -> Open Export Modal
-        window.exportManager.openModal();
-        break;
-
-      // D-Pad
-      case 12: // D-Pad Up -> Zoom In
+      case 'zoomIn':
         window.photoManager.zoomIn(0.4);
         break;
 
-      case 13: // D-Pad Down -> Zoom Out
+      case 'zoomOut':
         window.photoManager.zoomOut(0.4);
         break;
 
-      case 14: // D-Pad Left -> Prev Photo
-        window.photoManager.prevPhoto();
-        break;
-
-      case 15: // D-Pad Right -> Next Photo
-        window.photoManager.nextPhoto();
+      case 'resetZoom':
+        window.photoManager.resetZoom();
         break;
     }
   }
