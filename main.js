@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, protocol, net } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, protocol, net, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { pathToFileURL } = require('url');
@@ -24,6 +24,152 @@ protocol.registerSchemesAsPrivileged([
   }
 ]);
 
+function buildAppMenu(windowInstance) {
+  const isMac = process.platform === 'darwin';
+
+  const template = [
+    // File Menu
+    {
+      label: '&File',
+      submenu: [
+        {
+          label: '&Buka Folder Foto...',
+          accelerator: 'CmdOrCtrl+O',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'open-folder');
+          }
+        },
+        {
+          label: '&Export Foto...',
+          accelerator: 'CmdOrCtrl+E',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'open-export');
+          }
+        },
+        { type: 'separator' },
+        isMac ? { role: 'close' } : { label: '&Keluar', role: 'quit', accelerator: 'Alt+F4' }
+      ]
+    },
+    // Edit Menu
+    {
+      label: '&Edit',
+      submenu: [
+        {
+          label: '&Undo Seleksi Terakhir',
+          accelerator: 'CmdOrCtrl+Z',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'undo');
+          }
+        },
+        { type: 'separator' },
+        {
+          label: '✅ Pick (Pilih Foto)',
+          accelerator: '1',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'mark-pick');
+          }
+        },
+        {
+          label: '❌ Reject (Tolak Foto)',
+          accelerator: '2',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'mark-reject');
+          }
+        },
+        {
+          label: '🤔 Maybe (Ragu-ragu)',
+          accelerator: '3',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'mark-maybe');
+          }
+        },
+        {
+          label: '⚪ Reset Status',
+          accelerator: '0',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'mark-reset');
+          }
+        }
+      ]
+    },
+    // View Menu
+    {
+      label: '&View',
+      submenu: [
+        {
+          label: 'Foto &Berikutnya (Next)',
+          accelerator: 'Space',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'next-photo');
+          }
+        },
+        {
+          label: 'Foto &Sebelumnya (Prev)',
+          accelerator: 'Q',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'prev-photo');
+          }
+        },
+        { type: 'separator' },
+        {
+          label: 'Zoom &In',
+          accelerator: 'CmdOrCtrl+=',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'zoom-in');
+          }
+        },
+        {
+          label: 'Zoom &Out',
+          accelerator: 'CmdOrCtrl+-',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'zoom-out');
+          }
+        },
+        {
+          label: '&Reset Zoom',
+          accelerator: 'R',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'reset-zoom');
+          }
+        },
+        { type: 'separator' },
+        { label: '&Layar Penuh (Toggle Full Screen)', role: 'togglefullscreen' },
+        { label: 'Toggle Developer &Tools', role: 'toggleDevTools' },
+        { label: '&Reload Halaman', role: 'reload' }
+      ]
+    },
+    // Help Menu
+    {
+      label: '&Help',
+      submenu: [
+        {
+          label: '&Panduan Controller & Shortcut Keyboard',
+          accelerator: 'F1',
+          click: () => {
+            windowInstance.webContents.send('menu:action', 'show-help');
+          }
+        },
+        { type: 'separator' },
+        {
+          label: '&Tentang Photo Selector',
+          click: () => {
+            dialog.showMessageBox(windowInstance, {
+              type: 'info',
+              title: 'Tentang Photo Selector',
+              message: 'Photo Selector v1.0.0',
+              detail: 'Aplikasi desktop culling & seleksi foto berkecepatan tinggi dengan dukungan Joystick / Controller dan Keyboard.\n\nLisensi: MIT\nPengembang: NtwoS',
+              buttons: ['OK']
+            });
+          }
+        }
+      ]
+    }
+  ];
+
+  const menu = Menu.buildFromTemplate(template);
+  Menu.setApplicationMenu(menu);
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1366,
@@ -38,9 +184,11 @@ function createWindow() {
       nodeIntegration: false,
       sandbox: false
     },
-    autoHideMenuBar: true,
+    autoHideMenuBar: false,
     show: false
   });
+
+  buildAppMenu(mainWindow);
 
   mainWindow.loadFile(path.join(__dirname, 'src', 'index.html'));
 

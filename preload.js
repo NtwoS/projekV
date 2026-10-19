@@ -13,5 +13,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     // Normalise Windows backslashes to forward slashes
     const normalized = fullPath.replace(/\\/g, '/');
     return `photo-app:///${encodeURI(normalized)}`;
+  },
+
+  // Listen to native menu actions
+  onMenuAction: (callback) => {
+    ipcRenderer.on('menu:action', (_event, action) => callback(action));
   }
 });

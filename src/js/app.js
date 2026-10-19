@@ -17,6 +17,55 @@ class App {
   init() {
     this.initButtons();
     this.initDragAndDrop();
+    this.initMenuListeners();
+  }
+
+  initMenuListeners() {
+    if (!window.electronAPI || !window.electronAPI.onMenuAction) return;
+
+    window.electronAPI.onMenuAction((action) => {
+      switch (action) {
+        case 'open-folder':
+          this.openFolderDialog();
+          break;
+        case 'open-export':
+          if (window.exportManager) window.exportManager.openModal();
+          break;
+        case 'undo':
+          if (window.selectionManager) window.selectionManager.undo();
+          break;
+        case 'mark-pick':
+          if (window.selectionManager) window.selectionManager.mark('pick', true);
+          break;
+        case 'mark-reject':
+          if (window.selectionManager) window.selectionManager.mark('reject', true);
+          break;
+        case 'mark-maybe':
+          if (window.selectionManager) window.selectionManager.mark('maybe', true);
+          break;
+        case 'mark-reset':
+          if (window.selectionManager) window.selectionManager.mark(null, false);
+          break;
+        case 'next-photo':
+          if (window.photoManager) window.photoManager.nextPhoto();
+          break;
+        case 'prev-photo':
+          if (window.photoManager) window.photoManager.prevPhoto();
+          break;
+        case 'zoom-in':
+          if (window.photoManager) window.photoManager.zoomIn(0.3);
+          break;
+        case 'zoom-out':
+          if (window.photoManager) window.photoManager.zoomOut(0.3);
+          break;
+        case 'reset-zoom':
+          if (window.photoManager) window.photoManager.resetZoom();
+          break;
+        case 'show-help':
+          this.toggleHelpModal();
+          break;
+      }
+    });
   }
 
   initButtons() {
