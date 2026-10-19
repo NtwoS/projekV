@@ -10,13 +10,11 @@ const IMAGE_EXTENSIONS = new Set([
 
 let mainWindow = null;
 
-// GPU acceleration for fast image rendering
-app.commandLine.appendSwitch('enable-gpu-rasterization');
-app.commandLine.appendSwitch('enable-zero-copy');
-app.commandLine.appendSwitch('ignore-gpu-blocklist');
-
-// Suppress Chromium GPU cache file-lock warnings on Windows
+// GPU: gunakan software rendering sebagai fallback aman
+// Ini mencegah crash "GPU process exited unexpectedly: exit_code=34"
+// pada PC/laptop dengan GPU lemah atau driver lama
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
+app.disableHardwareAcceleration();
 
 // Register custom protocol for fast, secure local file loading
 protocol.registerSchemesAsPrivileged([
@@ -347,6 +345,15 @@ app.whenReady().then(() => {
   });
 
   createWindow();
+
+  // Tangani GPU crash — jangan biarkan aplikasi mati total
+  app.on('gpu-process-crashed', (event, killed) => {
+    console.warn('GPU process crashed. Killed:', killed);
+    // Reload halaman agar tetap bisa dipakai
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.reload();
+    }
+  });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

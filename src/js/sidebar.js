@@ -62,6 +62,8 @@ class SidebarManager {
         this.render();
       });
     });
+  }
+
   enqueueThumb(img) {
     if (img.dataset.loaded) return;
     img.dataset.loaded = 'pending';
@@ -148,6 +150,7 @@ class SidebarManager {
         this.cardMap.delete(photo.filename);
       }
       this.checkEmptyState();
+      this.updateCounts();
       return;
     }
 
@@ -174,6 +177,7 @@ class SidebarManager {
     }
 
     this.checkEmptyState();
+    this.updateCounts();
   }
 
   getStatusConfig(status) {
@@ -245,31 +249,28 @@ class SidebarManager {
   }
 
   changePhotoStatus(photo, index, newStatus) {
-    if (newStatus) {
-      window.selectionManager.selections.set(photo.filename, newStatus);
-    } else {
-      window.selectionManager.selections.delete(photo.filename);
+    // Gunakan method mark() dari SelectionManager agar counter tetap sinkron
+    // Parameter false = jangan auto-advance ke foto berikutnya
+    if (window.selectionManager) {
+      // Pertama, navigasi ke foto yang benar
+      if (window.photoManager && window.photoManager.showPhotoByFilename) {
+        window.photoManager.showPhotoByFilename(photo.filename);
+      }
+      // Gunakan mark() yang sudah handle counter, filmstrip, persist, dll
+      window.selectionManager.mark(newStatus, false);
     }
-
-    if (window.filmstripManager) {
-      window.filmstripManager.updateItemStatus(photo.filename, newStatus);
-    }
-    window.selectionManager.updateViewerBorder();
-    window.selectionManager.updateStats();
-    window.selectionManager.persist();
+    // Re-render sidebar card untuk foto ini
     this.updateItem(photo, index, newStatus);
+    this.updateCounts();
   }
 
   updateCounts() {
-    if (!window.photoManager || !window.selectionManager) return;
-    let pickCount = 0, rejectCount = 0, maybeCount = 0;
+    if (!window.selectionManager) return;
 
-    for (const [, status] of window.selectionManager.selections.entries()) {
-      if (status === 'pick') pickCount++;
-      else if (status === 'reject') rejectCount++;
-      else if (status === 'maybe') maybeCount++;
-    }
-
+    // Gunakan counter yang sudah ada di SelectionManager (O(1), tanpa iterasi)
+    const pickCount = window.selectionManager._pickCount;
+    const rejectCount = window.selectionManager._rejectCount;
+    const maybeCount = window.selectionManager._maybeCount;
     const total = pickCount + rejectCount + maybeCount;
     if (this.filterCountAll) this.filterCountAll.textContent = total;
     if (this.filterCountPick) this.filterCountPick.textContent = pickCount;

@@ -1,3 +1,8 @@
+// Tangkap error yang tidak tertangani
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception in Preload:', error);
+});
+
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
