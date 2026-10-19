@@ -148,9 +148,9 @@ class SidebarManager {
       }
 
       const statusLabels = {
-        pick: { label: 'Pick', icon: '✅', class: 'badge-pick' },
-        reject: { label: 'Reject', icon: '❌', class: 'badge-reject' },
-        maybe: { label: 'Ragu', icon: '🤔', class: 'badge-maybe' }
+        pick: { label: 'PICK', icon: '✓', class: 'badge-pick' },
+        reject: { label: 'REJECT', icon: '✕', class: 'badge-reject' },
+        maybe: { label: 'MAYBE', icon: '?', class: 'badge-maybe' }
       };
       const st = statusLabels[status] || { label: status, icon: '', class: '' };
 
@@ -160,7 +160,7 @@ class SidebarManager {
         <img class="sidebar-thumb" src="${thumbUrl}" alt="${photo.filename}" loading="lazy" />
         <div class="sidebar-info">
           <div class="sidebar-item-header">
-            <span class="sidebar-item-index">#${index + 1}</span>
+            <span class="sidebar-item-index">${index + 1}</span>
             <span class="sidebar-item-name" title="${photo.filename}">${photo.filename}</span>
           </div>
           <div class="sidebar-item-meta">
@@ -168,9 +168,9 @@ class SidebarManager {
           </div>
         </div>
         <div class="sidebar-item-actions">
-          <button class="btn-item-action btn-change-pick" title="Ubah jadi Pick">✅</button>
-          <button class="btn-item-action btn-change-reject" title="Ubah jadi Reject">❌</button>
-          <button class="btn-item-action btn-change-clear" title="Hapus Status">✕</button>
+          <button class="btn-item-action btn-change-pick" title="Ubah jadi Pick">✓</button>
+          <button class="btn-item-action btn-change-reject" title="Ubah jadi Reject">✕</button>
+          <button class="btn-item-action btn-change-clear" title="Hapus Status">—</button>
         </div>
       `;
 

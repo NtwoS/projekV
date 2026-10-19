@@ -142,10 +142,10 @@ class SelectionManager {
     this.selectionBadge.className = 'selection-badge';
 
     const badges = {
-      pick: { icon: '✅', text: 'PICK', class: 'badge-pick' },
-      reject: { icon: '❌', text: 'REJECT', class: 'badge-reject' },
-      maybe: { icon: '🤔', text: 'MAYBE', class: 'badge-maybe' },
-      null: { icon: '⚪', text: 'RESET', class: 'badge-reset' }
+      pick: { icon: '✓', text: 'PICK', class: 'badge-pick' },
+      reject: { icon: '✕', text: 'REJECT', class: 'badge-reject' },
+      maybe: { icon: '?', text: 'MAYBE', class: 'badge-maybe' },
+      null: { icon: '—', text: 'RESET', class: 'badge-reset' }
     };
 
     const config = badges[status] || badges['null'];

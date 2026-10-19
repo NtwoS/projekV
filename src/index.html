@@ -26,27 +26,23 @@
       <!-- Stats Counters -->
       <div id="statsBar" class="stats-bar hidden">
         <div class="stat-badge stat-index" title="Posisi foto saat ini">
-          <span id="statCurrentIndex">0</span> / <span id="statTotalPhotos">0</span>
+          <span id="statCurrentIndex">0</span>/<span id="statTotalPhotos">0</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-badge stat-pick" title="Foto yang dipilih (Pick)">
-          <span class="dot pick-dot"></span>
-          <span class="label">Pick:</span>
+          <span class="label">PICK</span>
           <strong id="statPickCount">0</strong>
         </div>
-        <div class="stat-badge stat-maybe" title="Foto ragu-ragu (Maybe)">
-          <span class="dot maybe-dot"></span>
-          <span class="label">Ragu:</span>
-          <strong id="statMaybeCount">0</strong>
-        </div>
         <div class="stat-badge stat-reject" title="Foto ditolak (Reject)">
-          <span class="dot reject-dot"></span>
-          <span class="label">Reject:</span>
+          <span class="label">REJECT</span>
           <strong id="statRejectCount">0</strong>
         </div>
+        <div class="stat-badge stat-maybe" title="Foto ragu-ragu (Maybe)">
+          <span class="label">MAYBE</span>
+          <strong id="statMaybeCount">0</strong>
+        </div>
         <div class="stat-badge stat-unmarked" title="Belum ditinjau">
-          <span class="dot unmarked-dot"></span>
-          <span class="label">Sisa:</span>
+          <span class="label">REMAIN</span>
           <strong id="statUnmarkedCount">0</strong>
         </div>
       </div>
@@ -55,20 +51,20 @@
         <!-- Gamepad Indicator -->
         <div id="gamepadBadge" class="gamepad-badge disconnected" title="Status Controller Gamepad">
           <span class="gp-icon">🎮</span>
-          <span id="gamepadNameText" class="gp-text">Controller Offline</span>
+          <span id="gamepadNameText" class="gp-text">OFFLINE</span>
         </div>
 
         <button id="btnToggleSidebar" class="btn btn-secondary active" title="Buka/Tutup Daftar Seleksi (Tab / L)">
-          <span>📋 Daftar</span>
+          <span>DAFTAR</span>
         </button>
         <button id="btnUndo" class="btn btn-icon" title="Undo aksi terakhir (Ctrl+Z / Stick L3)" disabled>
-          <span>↩</span>
+          <span>UNDO</span>
         </button>
         <button id="btnHelp" class="btn btn-icon" title="Panduan Tombol & Shortcut (H / ?)">
-          <span>❓</span>
+          <span>?</span>
         </button>
-        <button id="btnExport" class="btn btn-accent" title="Export / Pindahkan foto (Start / X)" disabled>
-          <span>📦 Export</span>
+        <button id="btnExport" class="btn btn-primary" title="Export / Pindahkan foto (Start / X)" disabled>
+          <span>EXPORT</span>
         </button>
       </div>
     </header>
@@ -80,7 +76,7 @@
         <div class="empty-state-card">
           <div class="empty-icon">📁</div>
           <h2>Buka Folder Foto untuk Memulai</h2>
-          <p>Dukungan cepat untuk JPG, PNG, WEBP, dan format foto lainnya.</p>
+          <p>Mendukung format JPG, PNG, WEBP, dan format foto lainnya.</p>
           <div class="empty-actions">
             <button id="btnEmptyOpenFolder" class="btn btn-large btn-primary">
               <span class="icon">📁</span> Pilih Folder Foto
@@ -90,15 +86,15 @@
             <div class="tip-item">
               <span class="tip-icon">🎮</span>
               <div>
-                <strong>Dukungan Gamepad / Joystick</strong>
-                <p>Gunakan tombol A/B/Y/X dan Shoulder Bumper untuk seleksi instan!</p>
+                <strong>Joystick / Gamepad</strong>
+                <p>A = Pick, B = Reject, Y = Maybe, RB/LB = Navigasi.</p>
               </div>
             </div>
             <div class="tip-item">
               <span class="tip-icon">⌨️</span>
               <div>
-                <strong>Tanpa Joystick Tetap Nyaman</strong>
-                <p>Gunakan tombol panah keyboard atau 1/2/3 untuk culling super cepat.</p>
+                <strong>Keyboard &amp; Mouse</strong>
+                <p>1 / → = Pick, 2 / ← = Reject, 3 / ↑ = Maybe, Space = Next.</p>
               </div>
             </div>
           </div>
@@ -110,14 +106,16 @@
         <!-- Floating Photo Meta Details -->
         <div id="photoMeta" class="photo-meta">
           <span id="photoFilename" class="meta-filename">IMG_0001.JPG</span>
+          <span class="meta-sep">•</span>
           <span id="photoDimensions" class="meta-dim"></span>
+          <span class="meta-sep">•</span>
           <span id="photoFileSize" class="meta-size"></span>
         </div>
 
         <!-- Zoom Indicator Badge -->
         <div id="zoomBadge" class="zoom-badge hidden">
           <span id="zoomPercent">100%</span>
-          <button id="btnResetZoom" class="btn-tiny" title="Reset Zoom (Klik dua kali / R)">Reset</button>
+          <button id="btnResetZoom" class="btn-tiny" title="Reset Zoom (Klik dua kali / R)">RESET</button>
         </div>
 
         <!-- Main Image Stage -->
@@ -125,7 +123,7 @@
           <img id="mainImage" class="main-image" alt="Preview Foto" draggable="false">
           <!-- Selection flash animation badge -->
           <div id="selectionBadge" class="selection-badge hidden">
-            <span id="badgeIcon" class="badge-icon">✅</span>
+            <span id="badgeIcon" class="badge-icon">✓</span>
             <span id="badgeText" class="badge-text">PICK</span>
           </div>
         </div>
@@ -141,32 +139,30 @@
       <aside id="sidebarRight" class="sidebar-right hidden">
         <div class="sidebar-header">
           <div class="sidebar-title">
-            <span class="sidebar-icon">📋</span>
-            <span>Daftar Seleksi</span>
+            <span>DAFTAR SELEKSI</span>
           </div>
           <button id="btnCloseSidebar" class="sidebar-close-btn" title="Tutup Panel (Tab / L)">›</button>
         </div>
 
         <!-- Filter Tabs -->
         <div class="sidebar-filters">
-          <button class="sidebar-filter-btn active" data-filter="all">Semua (<span id="filterCountAll">0</span>)</button>
-          <button class="sidebar-filter-btn filter-pick" data-filter="pick">Pick (<span id="filterCountPick">0</span>)</button>
-          <button class="sidebar-filter-btn filter-reject" data-filter="reject">Reject (<span id="filterCountReject">0</span>)</button>
-          <button class="sidebar-filter-btn filter-maybe" data-filter="maybe">Ragu (<span id="filterCountMaybe">0</span>)</button>
+          <button class="sidebar-filter-btn active" data-filter="all">SEMUA (<span id="filterCountAll">0</span>)</button>
+          <button class="sidebar-filter-btn filter-pick" data-filter="pick">PICK (<span id="filterCountPick">0</span>)</button>
+          <button class="sidebar-filter-btn filter-reject" data-filter="reject">REJECT (<span id="filterCountReject">0</span>)</button>
+          <button class="sidebar-filter-btn filter-maybe" data-filter="maybe">MAYBE (<span id="filterCountMaybe">0</span>)</button>
         </div>
 
         <!-- Scrollable List of Reviewed Items -->
         <div id="sidebarList" class="sidebar-list">
           <div class="sidebar-empty">
-            <span class="sidebar-empty-icon">📂</span>
-            <p>Belum ada foto yang dipilih.</p>
+            <p>Belum ada foto yang ditandai.</p>
           </div>
         </div>
 
         <!-- Sidebar Footer Action -->
         <div class="sidebar-footer">
           <button id="btnSidebarExport" class="btn btn-primary btn-block" title="Export Foto">
-            <span>📦 Export Hasil Seleksi</span>
+            <span>EXPORT FOTO</span>
           </button>
         </div>
       </aside>
@@ -176,37 +172,33 @@
     <footer id="bottomBar" class="bottom-bar hidden">
       <!-- Quick Action Controls Banner -->
       <div class="controls-toolbar">
-        <button id="btnNavPrev" class="ctrl-btn nav-btn" title="Foto Sebelumnya (LB / Panah Kiri / Q)">
-          <span class="key-badge">LB / Q</span>
-          <span class="ctrl-label">◀ Prev</span>
+        <button id="btnNavPrev" class="ctrl-btn nav-btn" title="Foto Sebelumnya (LB / Q)">
+          <span class="key-badge">LB/Q</span>
+          <span class="ctrl-label">PREV</span>
         </button>
 
         <div class="selection-action-group">
-          <button id="btnActionReject" class="ctrl-btn btn-action-reject" title="Tolak / Buang Foto (B / 2 / Backspace)">
-            <span class="key-badge">B / 2</span>
-            <span class="ctrl-icon">❌</span>
-            <span class="ctrl-label">Reject</span>
+          <button id="btnActionReject" class="ctrl-btn btn-action-reject" title="Tolak Foto (B / 2 / A)">
+            <span class="key-badge">B/2</span>
+            <span class="ctrl-label">REJECT</span>
           </button>
-          <button id="btnActionMaybe" class="ctrl-btn btn-action-maybe" title="Ragu-ragu (Y / 3 / Panah Atas)">
-            <span class="key-badge">Y / 3</span>
-            <span class="ctrl-icon">🤔</span>
-            <span class="ctrl-label">Maybe</span>
+          <button id="btnActionMaybe" class="ctrl-btn btn-action-maybe" title="Ragu-ragu (Y / 3 / W)">
+            <span class="key-badge">Y/3</span>
+            <span class="ctrl-label">MAYBE</span>
           </button>
-          <button id="btnActionPick" class="ctrl-btn btn-action-pick" title="Pilih Foto (A / 1 / Panah Kanan)">
-            <span class="key-badge">A / 1</span>
-            <span class="ctrl-icon">✅</span>
-            <span class="ctrl-label">Pick</span>
+          <button id="btnActionPick" class="ctrl-btn btn-action-pick" title="Pilih Foto (A / 1 / D)">
+            <span class="key-badge">A/1</span>
+            <span class="ctrl-label">PICK</span>
           </button>
-          <button id="btnActionReset" class="ctrl-btn btn-action-reset" title="Hapus Status (X / 0 / Panah Bawah)">
-            <span class="key-badge">X / 0</span>
-            <span class="ctrl-icon">⚪</span>
-            <span class="ctrl-label">Reset</span>
+          <button id="btnActionReset" class="ctrl-btn btn-action-reset" title="Hapus Status (X / 0 / S)">
+            <span class="key-badge">X/0</span>
+            <span class="ctrl-label">RESET</span>
           </button>
         </div>
 
-        <button id="btnNavNext" class="ctrl-btn nav-btn" title="Foto Berikutnya (RB / Space / E)">
-          <span class="ctrl-label">Next ▶</span>
-          <span class="key-badge">RB / E</span>
+        <button id="btnNavNext" class="ctrl-btn nav-btn" title="Foto Berikutnya (RB / E / Space)">
+          <span class="ctrl-label">NEXT</span>
+          <span class="key-badge">RB/E</span>
         </button>
       </div>
 
