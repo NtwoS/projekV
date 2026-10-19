@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f2027"/>
+      <stop offset="50%" stop-color="#203a43"/>
+      <stop offset="100%" stop-color="#2c5364"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ff9966"/>
+      <stop offset="100%" stop-color="#ff5e62"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#sky)"/>
+  <circle cx="960" cy="480" r="160" fill="url(#sun)" opacity="0.9"/>
+  <polygon points="100,1080 650,450 1200,1080" fill="#1b2a32" opacity="0.8"/>
+  <polygon points="700,1080 1250,380 1800,1080" fill="#141e24" opacity="0.9"/>
+  <polygon points="1200,1080 1550,560 1920,1080" fill="#0d1317"/>
+  <text x="960" y="980" font-family="Segoe UI, sans-serif" font-size="44" fill="#ffffff" opacity="0.8" text-anchor="middle" font-weight="600">Sample Photo 01 — Mountain Sunset</text>
+</svg>

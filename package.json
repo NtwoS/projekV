@@ -1,0 +1,21 @@
+{
+  "name": "photo-selector",
+  "version": "1.0.0",
+  "description": "Lightweight photo culling application with gamepad and keyboard support",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "photo",
+    "culling",
+    "selector",
+    "gamepad",
+    "electron"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.2.1"
+  }
+}

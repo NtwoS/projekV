@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <linearGradient id="emerald" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#051937"/>
+      <stop offset="25%" stop-color="#004d7a"/>
+      <stop offset="50%" stop-color="#008793"/>
+      <stop offset="75%" stop-color="#00bf72"/>
+      <stop offset="100%" stop-color="#a8eb12"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#emerald)"/>
+  <rect x="260" y="140" width="1400" height="800" rx="40" fill="#000000" opacity="0.25"/>
+  <text x="960" y="520" font-family="Segoe UI, sans-serif" font-size="52" fill="#ffffff" text-anchor="middle" font-weight="bold">Sample Photo 03 — Emerald Forest</text>
+  <text x="960" y="580" font-family="Segoe UI, sans-serif" font-size="28" fill="#ffffff" opacity="0.8" text-anchor="middle">Gunakan Analog Stick / D-Pad untuk Navigasi &amp; Zoom</text>
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <radialGradient id="cyber" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#7928ca"/>
+      <stop offset="100%" stop-color="#111111"/>
+    </radialGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#cyber)"/>
+  <circle cx="960" cy="540" r="320" fill="none" stroke="#ff0080" stroke-width="6" opacity="0.6"/>
+  <circle cx="960" cy="540" r="220" fill="none" stroke="#00dfd8" stroke-width="4" opacity="0.8"/>
+  <text x="960" y="550" font-family="Segoe UI, sans-serif" font-size="52" fill="#ffffff" text-anchor="middle" font-weight="bold">Sample Photo 04 — Cyber Aurora</text>
+  <text x="960" y="610" font-family="Segoe UI, sans-serif" font-size="28" fill="#ffffff" opacity="0.8" text-anchor="middle">Selesai Culling? Tekan [Start] / Tombol Export!</text>
+</svg>
