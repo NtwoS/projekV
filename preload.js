@@ -10,9 +10,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // Helper to convert full local path to custom protocol URL
   toPhotoUrl: (fullPath) => {
-    // Normalise Windows backslashes to forward slashes
-    const normalized = fullPath.replace(/\\/g, '/');
-    return `photo-app:///${encodeURI(normalized)}`;
+    return `photo-app://view/?file=${encodeURIComponent(fullPath)}`;
   },
 
   // Listen to native menu actions

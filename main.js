@@ -202,19 +202,25 @@ app.whenReady().then(() => {
   // Protocol handler for loading local photos safely without CORS/webSecurity issues
   protocol.handle('photo-app', (request) => {
     try {
-      // Decode URL and extract file path
       const url = new URL(request.url);
-      let filePath = decodeURIComponent(url.pathname);
-      
-      // On Windows, pathname begins with /D:/... remove leading slash
-      if (process.platform === 'win32' && filePath.startsWith('/')) {
-        filePath = filePath.slice(1);
+      let filePath = url.searchParams.get('file');
+
+      // Fallback if accessed via pathname
+      if (!filePath) {
+        filePath = decodeURIComponent(url.pathname);
+        if (process.platform === 'win32' && filePath.startsWith('/')) {
+          filePath = filePath.slice(1);
+        }
+      }
+
+      if (!filePath || !fs.existsSync(filePath)) {
+        return new Response('File not found: ' + filePath, { status: 404 });
       }
 
       return net.fetch(pathToFileURL(filePath).toString());
     } catch (err) {
       console.error('Failed to load local photo:', err);
-      return new Response('File not found', { status: 404 });
+      return new Response('File error: ' + err.message, { status: 500 });
     }
   });
 
