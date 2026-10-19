@@ -370,7 +370,9 @@ ipcMain.handle('dialog:openDirectory', async () => {
   return result.filePaths[0];
 });
 
-// IPC: Scan folder for photos
+// IPC: Scan folder for photos — instant, no per-file stat()
+// Photo viewers are fast because they just list files and show them.
+// Metadata (size, mtime) is fetched lazily only when needed.
 ipcMain.handle('photos:scan', async (event, folderPath) => {
   if (!folderPath || !fs.existsSync(folderPath)) {
     throw new Error('Folder tidak ditemukan');
@@ -383,18 +385,12 @@ ipcMain.handle('photos:scan', async (event, folderPath) => {
     if (entry.isFile()) {
       const ext = path.extname(entry.name).toLowerCase();
       if (IMAGE_EXTENSIONS.has(ext)) {
-        const fullPath = path.join(folderPath, entry.name);
-        try {
-          const stats = await fs.promises.stat(fullPath);
-          photos.push({
-            filename: entry.name,
-            fullPath: fullPath,
-            size: stats.size,
-            mtime: stats.mtimeMs
-          });
-        } catch {
-          // Skip if unable to stat
-        }
+        photos.push({
+          filename: entry.name,
+          fullPath: path.join(folderPath, entry.name),
+          size: 0,    // fetched lazily
+          mtime: 0    // fetched lazily
+        });
       }
     }
   }
@@ -405,6 +401,21 @@ ipcMain.handle('photos:scan', async (event, folderPath) => {
   );
 
   return photos;
+});
+
+// IPC: Fetch metadata (size, mtime) for a batch of files — called lazily
+ipcMain.handle('photos:metadata', async (event, filePaths) => {
+  const results = {};
+  const tasks = filePaths.map(async (fp) => {
+    try {
+      const stats = await fs.promises.stat(fp);
+      results[fp] = { size: stats.size, mtime: stats.mtimeMs };
+    } catch {
+      results[fp] = { size: 0, mtime: 0 };
+    }
+  });
+  await Promise.all(tasks);
+  return results;
 });
 
 // IPC: Load selection-data.json from target folder

@@ -9,22 +9,25 @@ class FilmstripManager {
     this.itemsMap = new Map(); // filename -> DOM element
     this.activeItem = null;    // cached reference — no querySelector needed
 
-    // IntersectionObserver: only load thumbnail images when they scroll into view
+    // Concurrency-limited thumbnail queue: prevents CPU & disk I/O spikes
+    this.loadQueue = [];
+    this.activeLoads = 0;
+    this.MAX_CONCURRENT_LOADS = 2; // load max 2 thumbnails at a time so UI stays 60fps
+
+    // IntersectionObserver: only enqueue thumbnails when they scroll close into view
     this.observer = new IntersectionObserver((entries) => {
       for (const entry of entries) {
         if (entry.isIntersecting) {
           const img = entry.target;
-          const src = img.dataset.src;
-          if (src && !img.src) {
-            img.decoding = 'async';
-            img.src = src;
+          if (img.dataset.src && !img.dataset.loaded) {
+            this.enqueueThumbnail(img);
           }
           this.observer.unobserve(img);
         }
       }
     }, {
       root: this.track,
-      rootMargin: '0px 300px' // preload 300px ahead/behind scroll area
+      rootMargin: '0px 60px' // tight margin — only visible + 1 ahead/behind
     });
 
     this.initEventListeners();
@@ -54,9 +57,39 @@ class FilmstripManager {
     }
   }
 
+  enqueueThumbnail(img) {
+    if (img.dataset.loaded) return;
+    img.dataset.loaded = 'pending';
+    this.loadQueue.push(img);
+    this.processQueue();
+  }
+
+  processQueue() {
+    while (this.activeLoads < this.MAX_CONCURRENT_LOADS && this.loadQueue.length > 0) {
+      const img = this.loadQueue.shift();
+      if (!img || img.dataset.loaded === 'done') continue;
+
+      img.dataset.loaded = 'loading';
+      this.activeLoads++;
+
+      const finish = () => {
+        img.dataset.loaded = 'done';
+        this.activeLoads--;
+        this.processQueue();
+      };
+
+      img.onload = finish;
+      img.onerror = finish;
+      img.decoding = 'async';
+      img.src = img.dataset.src;
+    }
+  }
+
   render(photos) {
-    // Disconnect all previous observers before clearing
+    // Disconnect all previous observers and clear queue before clearing
     this.observer.disconnect();
+    this.loadQueue = [];
+    this.activeLoads = 0;
     this.track.innerHTML = '';
     this.itemsMap.clear();
     this.activeItem = null;

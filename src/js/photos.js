@@ -15,7 +15,7 @@ class PhotoManager {
     // Decoded image cache — keeps fully decoded bitmaps in memory
     // so switching photos is instant without re-decoding from disk
     this.imageCache = new Map(); // index -> Image object (decoded)
-    this.CACHE_AHEAD = 3;  // pre-decode 3 photos ahead
+    this.CACHE_AHEAD = 1;  // pre-decode 1 photo ahead (lightweight & saves RAM)
     this.CACHE_BEHIND = 1; // keep 1 photo behind
 
     // Zoom & Pan state

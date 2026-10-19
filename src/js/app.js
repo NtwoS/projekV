@@ -289,7 +289,7 @@ class App {
   }
 
   async loadFolder(folderPath) {
-    this.showToast('Memindai folder foto...');
+    this.showToast('Membuka folder...');
 
     const success = await window.photoManager.loadFolder(folderPath);
     if (!success) return;

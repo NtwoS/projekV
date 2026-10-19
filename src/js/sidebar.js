@@ -17,21 +17,25 @@ class SidebarManager {
     this.isOpen = true;
     this.cardMap = new Map(); // filename -> DOM Card Element (avoids re-creating images!)
 
+    // Concurrency-limited thumbnail queue for sidebar
+    this.thumbQueue = [];
+    this.thumbActiveLoads = 0;
+    this.MAX_THUMB_LOADS = 2;
+
     // IntersectionObserver for lazy thumbnail loading
     this.thumbObserver = new IntersectionObserver((entries) => {
       for (const entry of entries) {
         if (entry.isIntersecting) {
           const img = entry.target;
-          if (img.dataset.src && !img.src) {
-            img.decoding = 'async';
-            img.src = img.dataset.src;
+          if (img.dataset.src && !img.dataset.loaded) {
+            this.enqueueThumb(img);
           }
           this.thumbObserver.unobserve(img);
         }
       }
     }, {
       root: this.sidebarList,
-      rootMargin: '200px 0px'
+      rootMargin: '40px 0px'
     });
 
     this.initEventListeners();
@@ -58,6 +62,32 @@ class SidebarManager {
         this.render();
       });
     });
+  enqueueThumb(img) {
+    if (img.dataset.loaded) return;
+    img.dataset.loaded = 'pending';
+    this.thumbQueue.push(img);
+    this.processThumbQueue();
+  }
+
+  processThumbQueue() {
+    while (this.thumbActiveLoads < this.MAX_THUMB_LOADS && this.thumbQueue.length > 0) {
+      const img = this.thumbQueue.shift();
+      if (!img || img.dataset.loaded === 'done') continue;
+
+      img.dataset.loaded = 'loading';
+      this.thumbActiveLoads++;
+
+      const finish = () => {
+        img.dataset.loaded = 'done';
+        this.thumbActiveLoads--;
+        this.processThumbQueue();
+      };
+
+      img.onload = finish;
+      img.onerror = finish;
+      img.decoding = 'async';
+      img.src = img.dataset.src;
+    }
   }
 
   toggle() {

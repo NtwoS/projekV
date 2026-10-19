@@ -65,6 +65,20 @@ class KeyboardHandler {
       return;
     }
 
+    // Toggle Filmstrip shortcut (Shift + B)
+    if (e.shiftKey && (e.key === 'B' || e.key === 'b')) {
+      e.preventDefault();
+      const bottomBar = document.getElementById('bottomBar');
+      if (bottomBar) {
+        bottomBar.classList.toggle('hidden');
+        if (window.app) {
+          const isHidden = bottomBar.classList.contains('hidden');
+          window.app.showToast(isHidden ? 'Filmstrip disembunyikan (Mode Ringan)' : 'Filmstrip ditampilkan');
+        }
+      }
+      return;
+    }
+
     // Lookup action from keybindingsManager
     const action = window.keybindingsManager
       ? window.keybindingsManager.getActionForKeyboard(e)
